@@ -1,4 +1,4 @@
-const ID_PLANILHA = "1T7N0q7aVitSWLr7xzvZPLB3Q2aWjngvaA8inHc1rkYo";
+const ID_PLANILHA = "ID_PLANILHA";
 const NOME_ABA = "Lançamentos";
 
 function doPost(e) {
