@@ -36,6 +36,41 @@ export const usuarios = pgTable("usuarios", {
 });
 
 // =============================================
+// CONTAS BANCÁRIAS
+// Cada conta da Pluggy pertence a um usuário
+// =============================================
+
+export const contas = pgTable("contas", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  usuarioId: uuid("usuario_id")
+    .references(() => usuarios.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+
+  // ID da conta retornado pela Pluggy
+  pluggyAccountId: text("pluggy_account_id")
+    .notNull()
+    .unique(),
+
+  // Ex: "Conta Corrente", "Conta Nubank"
+  nome: text("nome"),
+
+  // Ex: "Nubank", "Itaú", "Inter"
+  instituicao: text("instituicao"),
+
+  // Ex: CHECKING_ACCOUNT, SAVINGS_ACCOUNT etc.
+  tipo: text("tipo"),
+
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+  })
+    .notNull()
+    .defaultNow(),
+});
+
+// =============================================
 // CATEGORIAS
 // Categorias globais do sistema
 // =============================================
@@ -56,11 +91,9 @@ export const categorias = pgTable("categorias", {
 export const estabelecimentos = pgTable("estabelecimentos", {
   id: serial("id").primaryKey(),
 
-  // Ex: "Uber", "iFood", "Netflix"
   apelido: text("apelido")
     .notNull(),
 
-  // Ex: "UBER", "IFOOD", "NETFLIX"
   padraoBusca: text("padrao_busca")
     .notNull()
     .unique(),
@@ -94,12 +127,7 @@ export const cartoes = pgTable("cartoes", {
 
 // =============================================
 // REGRAS DE CATEGORIZACAO
-//
-// Cada usuário possui seu próprio aprendizado.
-//
-// Ex:
-// usuário A + UBER -> Transporte
-// usuário B + UBER -> Trabalho
+// Cada usuário possui seu próprio aprendizado
 // =============================================
 
 export const regrasCategorizacao = pgTable(
@@ -121,7 +149,6 @@ export const regrasCategorizacao = pgTable(
       .references(() => categorias.id)
       .notNull(),
 
-    // manual | ml | sistema
     origem: text("origem")
       .notNull()
       .default("manual"),
@@ -152,9 +179,9 @@ export const transacoes = pgTable(
       .primaryKey()
       .defaultRandom(),
 
-    // Dono da transação
-    usuarioId: uuid("usuario_id")
-      .references(() => usuarios.id, {
+    // Conta responsável pela transação
+    contaId: uuid("conta_id")
+      .references(() => contas.id, {
         onDelete: "cascade",
       })
       .notNull(),
@@ -204,9 +231,6 @@ export const transacoes = pgTable(
 
     idPluggy: text("id_pluggy"),
 
-    // accountId que a Pluggy retorna
-    pluggyAccountId: text("pluggy_account_id"),
-
     createdAt: timestamp("created_at", {
       withTimezone: true,
     })
@@ -215,8 +239,8 @@ export const transacoes = pgTable(
   },
 
   (table) => [
-    uniqueIndex("transacao_usuario_pluggy_unique").on(
-      table.usuarioId,
+    uniqueIndex("transacao_conta_pluggy_unique").on(
+      table.contaId,
       table.idPluggy
     ),
   ]
@@ -229,9 +253,25 @@ export const transacoes = pgTable(
 export const usuariosRelations = relations(
   usuarios,
   ({ many }) => ({
+    contas: many(contas),
     cartoes: many(cartoes),
-    transacoes: many(transacoes),
     regrasCategorizacao: many(regrasCategorizacao),
+  })
+);
+
+// =============================================
+// RELACOES - CONTAS
+// =============================================
+
+export const contasRelations = relations(
+  contas,
+  ({ one, many }) => ({
+    usuario: one(usuarios, {
+      fields: [contas.usuarioId],
+      references: [usuarios.id],
+    }),
+
+    transacoes: many(transacoes),
   })
 );
 
@@ -258,9 +298,9 @@ export const cartoesRelations = relations(
 export const transacoesRelations = relations(
   transacoes,
   ({ one }) => ({
-    usuario: one(usuarios, {
-      fields: [transacoes.usuarioId],
-      references: [usuarios.id],
+    conta: one(contas, {
+      fields: [transacoes.contaId],
+      references: [contas.id],
     }),
 
     categoria: one(categorias, {
