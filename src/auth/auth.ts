@@ -1,6 +1,5 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { eq } from "drizzle-orm";
 import "dotenv/config";
 import { db } from "../../db/client/Client.js";
 import { usuarios } from "../../db/schema/schema.js";
@@ -43,15 +42,16 @@ export async function cadastrarUsuario(
 }
 
 export async function loginUsuario(
-  email: string,
+  identificador: string,
   senha: string
 ) {
   const usuario = await db.query.usuarios.findFirst({
-    where: (usuario, { eq }) => eq(usuario.email, email),
+    where: (usuario, { eq, or }) =>
+      or(eq(usuario.email, identificador), eq(usuario.nome, identificador)),
   });
 
   if (!usuario) {
-    throw new Error("E-mail ou senha inválidos");
+    throw new Error("E-mail, nome ou senha inválidos");
   }
 
   const senhaCorreta = await bcrypt.compare(
@@ -60,7 +60,7 @@ export async function loginUsuario(
   );
 
   if (!senhaCorreta) {
-    throw new Error("E-mail ou senha inválidos");
+    throw new Error("E-mail, nome ou senha inválidos");
   }
 
   const token = jwt.sign(

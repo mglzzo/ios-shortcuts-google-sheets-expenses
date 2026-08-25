@@ -5,7 +5,11 @@
   "type": "module",
   "main": "Scripts.js",
   "scripts": {
+    "dev": "tsx watch controller.ts",
+    "start": "tsx controller.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "test:login": "tsx src/auth/test-login.ts login",
+    "test:register": "tsx src/auth/test-login.ts registro",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -20,10 +24,12 @@
     "bcrypt": "^6.0.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
+    "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.2.0",
     "drizzle-kit": "^0.31.10",
