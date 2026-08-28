@@ -82,3 +82,31 @@ export async function loginUsuario(
     },
   };
 }
+
+export async function obterUsuarioPorToken(token: string) {
+  try {
+    const payload = jwt.verify(token, JWT_SECRET) as {
+      userId: string;
+    };
+
+    const usuario = await db.query.usuarios.findFirst({
+      where: (usuario, { eq }) =>
+        eq(usuario.id, payload.userId),
+
+      columns: {
+        id: true,
+        nome: true,
+        email: true,
+        createdAt: true,
+      },
+    });
+
+    if (!usuario) {
+      throw new Error("Usuário não encontrado");
+    }
+
+    return usuario;
+  } catch {
+    throw new Error("Token inválido ou expirado");
+  }
+}

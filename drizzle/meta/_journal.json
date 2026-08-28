@@ -22,6 +22,13 @@
       "when": 1787593030379,
       "tag": "0002_clammy_sandman",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787833655848,
+      "tag": "0003_windy_lizard",
+      "breakpoints": true
     }
   ]
 }
