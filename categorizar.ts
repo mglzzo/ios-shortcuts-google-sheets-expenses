@@ -1,14 +1,47 @@
 import {
   APELIDOS_ESTABELECIMENTO,
-  MAPA_CATEGORIAS,PESSOAS_CONHECIDAS
+  MAPA_CATEGORIAS,
 } from "./config/Config.js";
-import { db } from "./db/client/Client.js";
-import { regrasCategorizacao } from "./db/schema/schema.js";
-import { eq } from "drizzle-orm";
 
-export function limparEstabelecimento(descricao: string): string {
+import { db } from "./db/client/Client.js";
+import {
+  categorias,
+  regrasCategorizacao,
+  transacoes,
+  contas,
+  conexoesBancarias,
+} from "./db/schema/schema.js";
+
+import {
+  and,
+  eq,
+  isNull,
+} from "drizzle-orm";
+
+
+
+// ======================================================
+// TIPOS
+// ======================================================
+
+interface TransacaoParaCategorizar {
+  description?: string | null;
+  category?: string | null;
+}
+
+
+// ======================================================
+// NORMALIZAÇÃO
+// ======================================================
+
+export function limparEstabelecimento(
+  descricao: string
+): string {
   if (!descricao) return "";
-  let nome = descricao.includes("|") ? descricao.split("|").pop()! : descricao;
+
+  let nome = descricao.includes("|")
+    ? descricao.split("|").pop()!
+    : descricao;
 
   nome = nome
     .replace(/^IFD\*/i, "IFD ")
@@ -18,8 +51,15 @@ export function limparEstabelecimento(descricao: string): string {
     .trim();
 
   const nomeUpper = nome.toUpperCase();
-  for (const [chave, apelido] of Object.entries(APELIDOS_ESTABELECIMENTO)) {
-    if (nomeUpper.includes(chave)) return apelido;
+
+  for (
+    const [chave, apelido] of Object.entries(
+      APELIDOS_ESTABELECIMENTO
+    )
+  ) {
+    if (nomeUpper.includes(chave.toUpperCase())) {
+      return apelido;
+    }
   }
 
   return nome
@@ -28,127 +68,268 @@ export function limparEstabelecimento(descricao: string): string {
     .trim();
 }
 
-export function normalizarParaBusca(descricao: string): string {
+
+export function normalizarParaBusca(
+  descricao: string
+): string {
   if (!descricao) return "";
-  const nome = descricao.includes("|") ? descricao.split("|").pop()! : descricao;
+
+  const nome = descricao.includes("|")
+    ? descricao.split("|").pop()!
+    : descricao;
+
   return nome
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toUpperCase()
-    .replace(/\bLTDA\b|\bME\b|\bEIRELI\b|\bS\.?A\.?\b|\bCIA\b|\b\d{4,}\b/g, "")
+    .replace(
+      /\bLTDA\b|\bME\b|\bEIRELI\b|\bS\.?A\.?\b|\bCIA\b|\b\d{4,}\b/g,
+      ""
+    )
     .replace(/\s+/g, " ")
     .trim();
 }
 
-export function inferirMetodo(descricao: string): string | null {
+
+// ======================================================
+// MÉTODO DE PAGAMENTO
+// ======================================================
+
+export function inferirMetodo(
+  descricao: string
+): string | null {
   if (!descricao) return null;
+
   const upper = descricao.toUpperCase();
-  if (upper.includes("TRANSFERÊNCIA ENVIADA") || upper.includes("TRANSFERENCIA ENVIADA")) return "PIX";
-  if (upper.includes("COMPRA NO DÉBITO") || upper.includes("COMPRA NO DEBITO")) return "Débito";
-  if (upper.includes("COMPRA NO CRÉDITO") || upper.includes("COMPRA NO CREDITO")) return "Crédito";
+
+  if (
+    upper.includes("TRANSFERÊNCIA ENVIADA") ||
+    upper.includes("TRANSFERENCIA ENVIADA")
+  ) {
+    return "PIX";
+  }
+
+  if (
+    upper.includes("COMPRA NO DÉBITO") ||
+    upper.includes("COMPRA NO DEBITO")
+  ) {
+    return "Débito";
+  }
+
+  if (
+    upper.includes("COMPRA NO CRÉDITO") ||
+    upper.includes("COMPRA NO CREDITO")
+  ) {
+    return "Crédito";
+  }
+
   return null;
 }
 
-function mapearCategoriaGenerica(categoriaPluggy: string): string {
-  for (const chave of Object.keys(MAPA_CATEGORIAS)) {
-    if (categoriaPluggy.includes(chave)) {
-      return MAPA_CATEGORIAS[chave] ?? "Outros";
+
+// ======================================================
+// CATEGORIAS
+// ======================================================
+
+function mapearCategoriaGenerica(
+  categoriaPluggy: string
+): string {
+  const categoriaNormalizada =
+    categoriaPluggy.toUpperCase();
+
+  for (
+    const [chave, categoria] of Object.entries(
+      MAPA_CATEGORIAS
+    )
+  ) {
+    if (
+      categoriaNormalizada.includes(
+        chave.toUpperCase()
+      )
+    ) {
+      return categoria;
     }
   }
+
   return "Outros";
 }
 
-function similaridadeTokens(a: string, b: string): number {
-  const tokensA = new Set(a.split(" ").filter(Boolean));
-  const tokensB = new Set(b.split(" ").filter(Boolean));
-  if (tokensA.size === 0 || tokensB.size === 0) return 0;
-  const intersecao = [...tokensA].filter((t) => tokensB.has(t)).length;
-  const uniao = new Set([...tokensA, ...tokensB]).size;
+
+async function buscarCategoriaIdPorNome(
+  nomeCategoria: string
+): Promise<number | null> {
+  const categoria =
+    await db.query.categorias.findFirst({
+      where: (categoria, { eq }) =>
+        eq(
+          categoria.nome,
+          nomeCategoria
+        ),
+    });
+
+  return categoria?.id ?? null;
+}
+
+
+// ======================================================
+// FUZZY MATCH
+// ======================================================
+
+function similaridadeTokens(
+  a: string,
+  b: string
+): number {
+  const tokensA = new Set(
+    a.split(" ").filter(Boolean)
+  );
+
+  const tokensB = new Set(
+    b.split(" ").filter(Boolean)
+  );
+
+  if (
+    tokensA.size === 0 ||
+    tokensB.size === 0
+  ) {
+    return 0;
+  }
+
+  const intersecao = [
+    ...tokensA,
+  ].filter((token) =>
+    tokensB.has(token)
+  ).length;
+
+  const uniao = new Set([
+    ...tokensA,
+    ...tokensB,
+  ]).size;
+
   return intersecao / uniao;
 }
 
+
 function melhorMatchFuzzy(
   nome: string,
-  dicionario: Record<string, string>,
+  dicionario: Record<string, number>,
   limiar = 0.6
 ): string | null {
   let melhorChave: string | null = null;
   let melhorScore = 0;
+
   for (const chave in dicionario) {
-    const score = similaridadeTokens(nome, chave);
+    const score =
+      similaridadeTokens(
+        nome,
+        chave
+      );
+
     if (score > melhorScore) {
       melhorScore = score;
       melhorChave = chave;
     }
   }
-  return melhorScore >= limiar ? melhorChave : null;
+
+  return melhorScore >= limiar
+    ? melhorChave
+    : null;
 }
 
-// Carrega o dicionário aprendido (equivalente à aba _Dicionario) direto do banco
-export async function carregarDicionarioEstabelecimentos(): Promise<Record<string, string>> {
-  const regras = await db.query.regrasCategorizacao.findMany();
-  const dicionario: Record<string, string> = {};
-  for (const r of regras) {
-    if (r.estabelecimentoNormalizado && r.categoriaId) {
-      dicionario[r.estabelecimentoNormalizado] = String(r.categoriaId);
-    }
+
+// ======================================================
+// DICIONÁRIO DO USUÁRIO
+// ======================================================
+
+export async function carregarDicionarioEstabelecimentos(
+  usuarioId: string
+): Promise<Record<string, number>> {
+  const regras =
+    await db.query.regrasCategorizacao.findMany({
+      where: (regra, { eq }) =>
+        eq(
+          regra.usuarioId,
+          usuarioId
+        ),
+    });
+
+  const dicionario: Record<string, number> = {};
+
+  for (const regra of regras) {
+    dicionario[
+      regra.estabelecimentoNormalizado
+    ] = regra.categoriaId;
   }
+
   return dicionario;
 }
 
-interface TransacaoPluggy {
-  description?: string;
-  category?: string;
-  paymentData?: { paymentMethod?: string };
-}
+
+// ======================================================
+// CATEGORIZAÇÃO
+// ======================================================
 
 export async function categorizarTransacao(
-  tx: TransacaoPluggy,
-  dicionarioEstabelecimentos: Record<string, string>
-): Promise<string> {
-  const isPix = tx.paymentData?.paymentMethod === "PIX";
-  const nomeNormalizado = normalizarParaBusca(tx.description || "");
+  tx: TransacaoParaCategorizar,
+  dicionario: Record<string, number>
+): Promise<number | null> {
+  const nomeNormalizado =
+    normalizarParaBusca(
+      tx.description ?? ""
+    );
 
-  if (isPix && PESSOAS_CONHECIDAS[nomeNormalizado]) {
-    return PESSOAS_CONHECIDAS[nomeNormalizado].categoria;
+  // 1. Regra pessoal exata
+  const categoriaExata =
+    dicionario[nomeNormalizado];
+
+  if (categoriaExata) {
+    return categoriaExata;
   }
 
-  if (dicionarioEstabelecimentos[nomeNormalizado]) {
-    return dicionarioEstabelecimentos[nomeNormalizado];
+  // 2. Fuzzy
+  const match =
+    melhorMatchFuzzy(
+      nomeNormalizado,
+      dicionario
+    );
+
+  if (match) {
+    return dicionario[match] ?? null;
   }
 
-const match = melhorMatchFuzzy(
-  nomeNormalizado,
-  dicionarioEstabelecimentos
-);
-if (match) {
-  return dicionarioEstabelecimentos[match] ?? nomeNormalizado;
+  // 3. Pluggy
+  const categoriaGenerica =
+    mapearCategoriaGenerica(
+      tx.category ?? ""
+    );
+
+  return buscarCategoriaIdPorNome(
+    categoriaGenerica
+  );
 }
 
-  const nomeUpper = nomeNormalizado.toUpperCase();
-  for (const [chave] of Object.entries(APELIDOS_ESTABELECIMENTO)) {
-    if (nomeUpper.includes(chave)) return mapearCategoriaGenerica(chave);
-  }
+// ======================================================
+// APRENDIZADO MANUAL
+// ======================================================
 
-  return mapearCategoriaGenerica(tx.category || "");
-}
-
-// Salva/atualiza uma regra aprendida — equivalente ao salvarNoDicionario do Apps Script
 export async function salvarNoDicionario(
   usuarioId: string,
   estabelecimentoNormalizado: string,
   categoriaId: number
 ) {
-  const existente = await db.query.regrasCategorizacao.findFirst({
-    where: (regra, { and, eq }) =>
-      and(
-        eq(regra.usuarioId, usuarioId),
-        eq(
-          regra.estabelecimentoNormalizado,
-          estabelecimentoNormalizado
-        ) 
-      ),
-  });
+  const existente =
+    await db.query.regrasCategorizacao.findFirst({
+      where: (regra, { and, eq }) =>
+        and(
+          eq(
+            regra.usuarioId,
+            usuarioId
+          ),
+          eq(
+            regra.estabelecimentoNormalizado,
+            estabelecimentoNormalizado
+          )
+        ),
+    });
 
   if (existente) {
     await db
@@ -158,13 +339,125 @@ export async function salvarNoDicionario(
         origem: "manual",
         atualizadoEm: new Date(),
       })
-      .where(eq(regrasCategorizacao.id, existente.id));
-  } else {
-    await db.insert(regrasCategorizacao).values({
+      .where(
+        eq(
+          regrasCategorizacao.id,
+          existente.id
+        )
+      );
+
+    return;
+  }
+
+  await db
+    .insert(regrasCategorizacao)
+    .values({
       usuarioId,
       estabelecimentoNormalizado,
       categoriaId,
       origem: "manual",
     });
-  }
 }
+
+// ======================================================
+// CATEGORIZAÇÃO DE TRANSAÇÕES PENDENTES
+// ======================================================
+
+export async function categorizarTransacoesPendentes(
+  usuarioId: string
+) {
+  const pendentes = await db
+    .select({
+      transacaoId: transacoes.id,
+      estabelecimentoBruto:
+        transacoes.estabelecimentoBruto,
+      categoriaPluggy:
+        transacoes.categoriaPluggy,
+    })
+    .from(transacoes)
+    .innerJoin(
+      contas,
+      eq(
+        transacoes.contaId,
+        contas.id
+      )
+    )
+    .innerJoin(
+      conexoesBancarias,
+      eq(
+        contas.conexaoId,
+        conexoesBancarias.id
+      )
+    )
+    .where(
+      and(
+        eq(
+          conexoesBancarias.usuarioId,
+          usuarioId
+        ),
+        isNull(
+          transacoes.categoriaId
+        )
+      )
+    );
+
+  let categorizadas = 0;
+  let semCategoria = 0;
+const dicionario =
+  await carregarDicionarioEstabelecimentos(
+    usuarioId
+  );
+
+for (const transacao of pendentes) {
+  const categoriaId =
+    await categorizarTransacao(
+      {
+        description:
+          transacao.estabelecimentoBruto,
+
+        category:
+          transacao.categoriaPluggy,
+      },
+      dicionario
+    );
+}
+  for (const transacao of pendentes) {
+    const categoriaId =
+      await categorizarTransacao(
+        {
+          description:
+            transacao.estabelecimentoBruto,
+
+          category:
+            transacao.categoriaPluggy,
+        },
+        dicionario
+      );
+
+    if (!categoriaId) {
+      semCategoria++;
+      continue;
+    }
+
+    await db
+      .update(transacoes)
+      .set({
+        categoriaId,
+      })
+      .where(
+        eq(
+          transacoes.id,
+          transacao.transacaoId
+        )
+      );
+
+    categorizadas++;
+  }
+
+  return {
+    totalPendentes: pendentes.length,
+    categorizadas,
+    semCategoria,
+  };
+}
+
