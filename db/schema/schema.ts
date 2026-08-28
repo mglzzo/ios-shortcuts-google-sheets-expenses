@@ -36,15 +36,43 @@ export const usuarios = pgTable("usuarios", {
 });
 
 // =============================================
-// CONTAS BANCÁRIAS
-// Cada conta da Pluggy pertence a um usuário
+// CONEXOES BANCARIAS
+// Representa um Item criado na Pluggy
 // =============================================
 
-export const contas = pgTable("contas", {
+export const conexoesBancarias = pgTable("conexoes_bancarias", {
   id: uuid("id").primaryKey().defaultRandom(),
 
   usuarioId: uuid("usuario_id")
     .references(() => usuarios.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+
+  // Item ID / Item UID retornado pela Pluggy
+  pluggyItemId: text("pluggy_item_id")
+    .notNull()
+    .unique(),
+
+  // Ex: Nubank, Itaú, Inter
+  instituicao: text("instituicao"),
+
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+  })
+    .notNull()
+    .defaultNow(),
+});
+
+// =============================================
+// CONTAS BANCÁRIAS
+// Cada conta da Pluggy pertence a uma conexão bancária
+// =============================================
+export const contas = pgTable("contas", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  conexaoId: uuid("conexao_id")
+    .references(() => conexoesBancarias.id, {
       onDelete: "cascade",
     })
     .notNull(),
@@ -54,13 +82,8 @@ export const contas = pgTable("contas", {
     .notNull()
     .unique(),
 
-  // Ex: "Conta Corrente", "Conta Nubank"
   nome: text("nome"),
 
-  // Ex: "Nubank", "Itaú", "Inter"
-  instituicao: text("instituicao"),
-
-  // Ex: CHECKING_ACCOUNT, SAVINGS_ACCOUNT etc.
   tipo: text("tipo"),
 
   createdAt: timestamp("created_at", {
@@ -253,9 +276,25 @@ export const transacoes = pgTable(
 export const usuariosRelations = relations(
   usuarios,
   ({ many }) => ({
-    contas: many(contas),
+    conexoesBancarias: many(conexoesBancarias),
     cartoes: many(cartoes),
     regrasCategorizacao: many(regrasCategorizacao),
+  })
+);
+
+// =============================================
+// RELACOES - CONEXOES BANCARIAS
+// =============================================
+
+export const conexoesBancariasRelations = relations(
+  conexoesBancarias,
+  ({ one, many }) => ({
+    usuario: one(usuarios, {
+      fields: [conexoesBancarias.usuarioId],
+      references: [usuarios.id],
+    }),
+
+    contas: many(contas),
   })
 );
 
@@ -266,9 +305,9 @@ export const usuariosRelations = relations(
 export const contasRelations = relations(
   contas,
   ({ one, many }) => ({
-    usuario: one(usuarios, {
-      fields: [contas.usuarioId],
-      references: [usuarios.id],
+    conexao: one(conexoesBancarias, {
+      fields: [contas.conexaoId],
+      references: [conexoesBancarias.id],
     }),
 
     transacoes: many(transacoes),

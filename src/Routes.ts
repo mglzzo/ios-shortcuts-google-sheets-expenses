@@ -2,9 +2,43 @@ import { Router } from "express";
 import {
   cadastrarUsuario,
   loginUsuario,
+  obterUsuarioPorToken,
 } from "./auth/auth.js";
 
 const router = Router();
+
+router.get("/me", async (req, res) => {
+  try {
+    const authorization = req.headers.authorization;
+
+    if (!authorization) {
+      return res.status(401).json({
+        erro: "Token não informado",
+      });
+    }
+
+    const [tipo, token] = authorization.split(" ");
+
+    if (tipo !== "Bearer" || !token) {
+      return res.status(401).json({
+        erro: "Token inválido",
+      });
+    }
+
+    const usuario = await obterUsuarioPorToken(token);
+
+    return res.json({
+      usuario,
+    });
+  } catch (error) {
+    return res.status(401).json({
+      erro:
+        error instanceof Error
+          ? error.message
+          : "Não autorizado",
+    });
+  }
+});
 
 router.post("/register", async (req, res) => {
   try {
