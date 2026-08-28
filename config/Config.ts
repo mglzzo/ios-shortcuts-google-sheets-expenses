@@ -36,58 +36,66 @@ export const APELIDOS_ESTABELECIMENTO: Record<string, string> = {
   DYLLE: "Dylle",
 };
 
-export const PESSOAS_CONHECIDAS: Record<
-  string,
-  { apelido: string; categoria: string }
-> = {
-  "YASMIM BEATRIZ DA SILVA LIMA": { apelido: "Yas <3", categoria: "Lazer" },
-  "MARIA EDUARDA DE CASTRO MOREIRA": { apelido: "Duda", categoria: "Outros" },
-  "DANIEL SANTOS SILVA": { apelido: "Daniel", categoria: "Trevo" },
-  "JULIA ALMEIDA FERREIRA BARBOSA": { apelido: "Julia", categoria: "Outros" },
-  "GABRIEL BERARDO MAZZO DOS SANTOS": { apelido: "Gabriel", categoria: "Contas/Utilidades" },
-};
 
 export const MAPA_CATEGORIAS: Record<string, string> = {
   // ALIMENTAÇÃO
   "Food and Drink": "Mercado",
-  Supermarket: "Mercado",
-  Groceries: "Mercado",
+  "Supermarket": "Mercado",
+  "Groceries": "Mercado",
 
-  Restaurants: "Lazer",
-  Ifood: "Lazer",
-  iFood: "Lazer",
+  "Restaurants": "Lazer",
+  "Eating out": "Lazer",
+  "Food delivery": "Lazer",
+  "Ifood": "Lazer",
+  "iFood": "Lazer",
 
   // TRANSPORTE
-  Transport: "Transporte",
-  Uber: "Transporte",
+  "Transport": "Transporte",
+  "Uber": "Transporte",
   "Taxi and ride-hailing": "Transporte",
   "Gas Station": "Transporte",
 
   // SAÚDE
-  Health: "Saúde",
-  Pharmacy: "Saúde",
+  "Health": "Saúde",
+  "Pharmacy": "Saúde",
 
   // EDUCAÇÃO
-  Education: "Educação",
+  "Education": "Educação",
 
   // LAZER
-  Entertainment: "Lazer",
+  "Entertainment": "Lazer",
+  "Leisure": "Lazer",
+  "Gambling": "Lazer",
 
   // COMPRAS
-  Shopping: "Vestuário",
-  Electronics: "Eletrônicos",
+  "Shopping": "Vestuário",
+  "Clothing": "Vestuário",
+  "Electronics": "Eletrônicos",
 
-  // CASA
-  Utilities: "Contas/Utilidades",
-  Housing: "Moradia",
-  Rent: "Moradia",
+  // CASA / CONTAS
+  "Utilities": "Contas/Utilidades",
+  "Electricity": "Contas/Utilidades",
+  "Internet": "Contas/Utilidades",
+  "Mobile": "Contas/Utilidades",
+  "Housing": "Moradia",
+  "Rent": "Moradia",
 
-  // ASSINATURAS
-  Subscription: "Assinaturas",
+  // ASSINATURAS / SERVIÇOS
+  "Subscription": "Assinaturas",
+  "Digital services": "Assinaturas",
+  "TV": "Assinaturas",
+
+  // FINANCEIRO
+  "Transfers": "Transferências",
+  "Same person transfer": "Transferências",
+  "Transfer - Internal": "Transferências",
+  "Loans": "Empréstimos",
+  "Loans and financing": "Empréstimos",
+  "Investments": "Investimentos",
 
   // GENÉRICOS
-  Transfer: "Outros",
-  Payment: "Outros",
+  "Services": "Outros",
+  "Payment": "Outros",
 };
 
 export const PLUGGY_API_URL = "https://api.pluggy.ai";
