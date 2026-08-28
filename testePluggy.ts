@@ -1,23 +1,14 @@
 import "dotenv/config";
-import { getAccount, getTransactions } from "./src/Pluggy/pluggyController.js";
+import { getTransactions } from "./src/Pluggy/clientPluggy.js";
 
 async function main() {
   const usuarioId = "94008833-c8bf-49c7-98c2-4b8242d8200a";
 
-  try {
-    const conta = await getAccount(usuarioId);
-    console.log("Conta encontrada:");
-    console.log(conta);
-  } catch (error) {
-    console.error("Erro:", error);
-  }
-  try{
-    const conta = await getTransactions(usuarioId);
-    console.log("Transações encontradas:");
-    console.log(conta);
-  } catch (error) {
-    console.error("Erro:", error);
-  }
+  const resultado = await getTransactions(usuarioId);
+
+  console.log(
+    `Teste concluído: ${resultado.totalRecebidas} transações recebidas e ${resultado.totalInseridas} novas inseridas`
+  );
 }
 
-main();
+main().catch(console.error);
