@@ -83,13 +83,14 @@ export function normalizarParaBusca(
     .replace(/[\u0300-\u036f]/g, "")
     .toUpperCase()
     .replace(
-      /\bLTDA\b|\bME\b|\bEIRELI\b|\bS\.?A\.?\b|\bCIA\b|\b\d{4,}\b/g,
+      /\bLTDA\b|\bME\b|\bEIRELI\b|\bS\.?A\.?\b|\bCIA\b/g,
       ""
     )
+    .replace(/[^A-Z0-9\s]/g, " ")
+    .replace(/\b\d{4,}\b/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
-
 
 // ======================================================
 // MÉTODO DE PAGAMENTO
@@ -408,19 +409,6 @@ const dicionario =
     usuarioId
   );
 
-for (const transacao of pendentes) {
-  const categoriaId =
-    await categorizarTransacao(
-      {
-        description:
-          transacao.estabelecimentoBruto,
-
-        category:
-          transacao.categoriaPluggy,
-      },
-      dicionario
-    );
-}
   for (const transacao of pendentes) {
     const categoriaId =
       await categorizarTransacao(
@@ -458,6 +446,154 @@ for (const transacao of pendentes) {
     totalPendentes: pendentes.length,
     categorizadas,
     semCategoria,
+  };
+}
+export async function recategorizarEstabelecimento(
+  usuarioId: string,
+  estabelecimentoNormalizado: string,
+  categoriaId: number
+) {
+  const transacoesUsuario = await db
+    .select({
+      id: transacoes.id,
+      estabelecimentoBruto:
+        transacoes.estabelecimentoBruto,
+    })
+    .from(transacoes)
+    .innerJoin(
+      contas,
+      eq(
+        transacoes.contaId,
+        contas.id
+      )
+    )
+    .innerJoin(
+      conexoesBancarias,
+      eq(
+        contas.conexaoId,
+        conexoesBancarias.id
+      )
+    )
+    .where(
+      eq(
+        conexoesBancarias.usuarioId,
+        usuarioId
+      )
+    );
+
+  let atualizadas = 0;
+
+  for (const transacao of transacoesUsuario) {
+    const normalizado =
+      normalizarParaBusca(
+        transacao.estabelecimentoBruto
+      );
+
+    if (
+      normalizado !==
+      estabelecimentoNormalizado
+    ) {
+      continue;
+    }
+
+    await db
+      .update(transacoes)
+      .set({
+        categoriaId,
+      })
+      .where(
+        eq(
+          transacoes.id,
+          transacao.id
+        )
+      );
+
+    atualizadas++;
+  }
+
+  return atualizadas;
+}
+
+export async function corrigirCategoriaTransacao(
+  usuarioId: string,
+  transacaoId: string,
+  novaCategoriaId: number
+) {
+  const resultado = await db
+    .select({
+      id: transacoes.id,
+      estabelecimentoBruto:
+        transacoes.estabelecimentoBruto,
+    })
+    .from(transacoes)
+    .innerJoin(
+      contas,
+      eq(
+        transacoes.contaId,
+        contas.id
+      )
+    )
+    .innerJoin(
+      conexoesBancarias,
+      eq(
+        contas.conexaoId,
+        conexoesBancarias.id
+      )
+    )
+    .where(
+      and(
+        eq(
+          transacoes.id,
+          transacaoId
+        ),
+        eq(
+          conexoesBancarias.usuarioId,
+          usuarioId
+        )
+      )
+    )
+    .limit(1);
+
+  const transacao = resultado[0];
+
+  if (!transacao) {
+    throw new Error(
+      "Transação não encontrada."
+    );
+  }
+
+  const estabelecimentoNormalizado =
+    normalizarParaBusca(
+      transacao.estabelecimentoBruto
+    );
+
+  if (!estabelecimentoNormalizado) {
+    throw new Error(
+      "Não foi possível identificar o estabelecimento."
+    );
+  }
+
+  // Ensina a preferência para aquele usuário
+  await salvarNoDicionario(
+    usuarioId,
+    estabelecimentoNormalizado,
+    novaCategoriaId
+  );
+
+  // Corrige todas as transações daquele
+  // estabelecimento para aquele usuário
+  const transacoesAtualizadas =
+    await recategorizarEstabelecimento(
+      usuarioId,
+      estabelecimentoNormalizado,
+      novaCategoriaId
+    );
+
+  return {
+    transacaoId,
+    estabelecimentoNormalizado,
+    categoriaId: novaCategoriaId,
+    transacoesAtualizadas,
   };
 }
 
