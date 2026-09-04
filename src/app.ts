@@ -1,11 +1,17 @@
 import express from "express";
 
-
-import authRotes from "./Routes.js";
+import authRoutes from "./auth/auth.routes.js";
 
 const app = express();
 
 app.use(express.json());
-app.use('/auth', authRotes);
+
+app.get("/", (_req, res) => {
+  return res.json({
+    status: "API funcionando",
+  });
+});
+
+app.use("/auth", authRoutes);
 
 export default app;
