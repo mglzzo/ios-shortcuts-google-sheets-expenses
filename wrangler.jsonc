@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
 
-  "name": "finance-api",
+  "name": "ios-shortcuts-db-expenses",
   "main": "src/index.ts",
 
   "compatibility_date": "2026-09-04",
