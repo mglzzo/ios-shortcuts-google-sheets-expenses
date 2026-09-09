@@ -6,8 +6,7 @@
   "main": "Scripts.js",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "start": "tsx controller.ts",
+    "deploy": "wrangler deploy",  
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:login": "tsx src/auth/test-login.ts login",
     "test:register": "tsx src/auth/test-login.ts registro",

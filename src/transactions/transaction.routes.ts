@@ -20,15 +20,7 @@ import {
 
 import multer from "multer";
 const router = Router();
-export default router;
 
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 5 * 1024 * 1024,
-  },
-});
 
 router.get(
   "/",
@@ -54,60 +46,6 @@ router.get(
 
       return res.status(500).json({
         erro: "Erro ao buscar transações.",
-      });
-    }
-  }
-);
-
-router.patch(
-  "/:id/category",
-  autenticar,
-  async (
-    req: RequestAutenticada,
-    res
-  ) => {
-    try {
-      const usuarioId =
-        req.user!.userId;
-
-      const transacaoId =
-        req.params.id;
-
-      if (typeof transacaoId !== "string") {
-        return res.status(400).json({
-          erro: "id da transação inválido.",
-        });
-      }
-
-      const {
-        categoriaId,
-      } = req.body;
-
-      if (
-        !categoriaId ||
-        typeof categoriaId !== "number"
-      ) {
-        return res.status(400).json({
-          erro: "categoriaId inválido.",
-        });
-      }
-
-      const resultado =
-        await corrigirCategoriaTransacao(
-          usuarioId,
-          transacaoId,
-          categoriaId
-        );
-
-      return res.json(
-        resultado
-      );
-    } catch (error) {
-      console.error(error);
-
-      return res.status(500).json({
-        erro:
-          "Erro ao alterar categoria.",
       });
     }
   }
@@ -188,6 +126,16 @@ router.post("/manual", autenticar, async (req: RequestAutenticada, res) => {
       erro: error instanceof Error ? error.message : String(error),
     });
   }
+});
+
+export default router;
+
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
 });
 
 router.post(
@@ -292,3 +240,4 @@ router.post(
     }
   }
 );
+

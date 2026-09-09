@@ -11,6 +11,7 @@
     "target": "ES2022",
     "types": ["node","./worker-configuration.d.ts",
       "node"],
+    "resolveJsonModule": true,
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
