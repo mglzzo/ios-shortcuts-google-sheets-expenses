@@ -14,17 +14,7 @@ const URL_PLUGGY = process.env.URL_PLUGGY;
 const PLUGGY_CLIENT_ID = process.env.PLUGGY_CLIENT_ID;
 const PLUGGY_CLIENT_SECRET = process.env.PLUGGY_CLIENT_SECRET;
 
-if (!URL_PLUGGY) {
-  throw new Error("URL_PLUGGY não definida no .env");
-}
 
-if (!PLUGGY_CLIENT_ID) {
-  throw new Error("PLUGGY_CLIENT_ID não definida no .env");
-}
-
-if (!PLUGGY_CLIENT_SECRET) {
-  throw new Error("PLUGGY_CLIENT_SECRET não definida no .env");
-}
 
 // =============================================
 // TIPOS

@@ -10,17 +10,6 @@ const PLUGGY_CLIENT_ID = process.env.PLUGGY_CLIENT_ID;
 const PLUGGY_CLIENT_SECRET = process.env.PLUGGY_CLIENT_SECRET;
 const usuarioId = "94008833-c8bf-49c7-98c2-4b8242d8200a";
 
-if (!URL_PLUGGY) {
-  throw new Error("URL_PLUGGY não definida no .env");
-}
-
-if (!PLUGGY_CLIENT_ID) {
-  throw new Error("PLUGGY_CLIENT_ID não definida no .env");
-}
-
-if (!PLUGGY_CLIENT_SECRET) {
-  throw new Error("PLUGGY_CLIENT_SECRET não definida no .env");
-}
 
 interface PluggyAccount {
   id: string;
