@@ -156,7 +156,7 @@ function mapearCategoriaGenerica(
 }
 
 
-async function buscarCategoriaIdPorNome(
+export async function buscarCategoriaIdPorNome(
   nomeCategoria: string
 ): Promise<number | null> {
   const categoria =
