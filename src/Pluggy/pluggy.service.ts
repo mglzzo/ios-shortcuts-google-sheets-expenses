@@ -8,7 +8,9 @@ import {
   categorizarTransacoesPendentes,
 } from "../../categorizar.js";
 
-const URL_PLUGGY = process.env.URL_PLUGGY;
+const URL_PLUGGY =
+  process.env.URL_PLUGGY ??
+  "https://api.pluggy.ai";
 const PLUGGY_CLIENT_ID = process.env.PLUGGY_CLIENT_ID;
 const PLUGGY_CLIENT_SECRET = process.env.PLUGGY_CLIENT_SECRET;
 
