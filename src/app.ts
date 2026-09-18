@@ -6,12 +6,39 @@ import docsRoutes from "./docs/docs.routes.js";
 import categoryRoutes from "./categories/category.routes.js";
 import accountRoutes from "./accounts/account.routes.js";
 import pluggyRoutes from "./Pluggy/pluggy.routes.js";
+
 const app = express();
 
-app.use(express.json());
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
 
-// ...
-app.use("/docs", docsRoutes);
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "https://ios-shortcuts.pages.dev",
+  ];
+
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET,POST,PATCH,PUT,DELETE,OPTIONS",
+  );
+
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization",
+  );
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
+
+app.use(express.json());
 
 app.get("/", (_req, res) => {
   return res.json({
@@ -19,11 +46,11 @@ app.get("/", (_req, res) => {
   });
 });
 
+app.use("/docs", docsRoutes);
 app.use("/categories", categoryRoutes);
 app.use("/auth", authRoutes);
 app.use("/transactions", transactionRoutes);
 app.use("/accounts", accountRoutes);
 app.use("/pluggy", pluggyRoutes);
-app.use("/docs", docsRoutes); // <- novo
 
 export default app;
