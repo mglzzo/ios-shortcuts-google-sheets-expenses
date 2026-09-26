@@ -1,4 +1,14 @@
-import { Eye, EyeOff, LockKeyhole, Mail, User } from 'lucide-react'
+import {
+  ArrowRight,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  LockKeyhole,
+  Mail,
+  ShieldCheck,
+  Sparkles,
+  UserRound,
+} from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -15,9 +25,11 @@ function Cadastro() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+
     setError('')
 
     if (senha !== confirmarSenha) {
@@ -34,7 +46,11 @@ function Cadastro() {
         senha,
       })
 
-      navigate('/login')
+      setSuccess(true)
+
+      setTimeout(() => {
+        navigate('/login')
+      }, 1800)
     } catch (err) {
       setError(
         err instanceof Error
@@ -47,196 +63,309 @@ function Cadastro() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[var(--color-background)] px-4 py-8 sm:px-6">
-      <div className="w-full max-w-[430px]">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--color-primary)]">
-            <span className="text-2xl font-bold text-[var(--color-surface-dark)]">
-              G
+    <main className="min-h-screen bg-[#f7f7f0] lg:grid lg:grid-cols-2">
+      <section className="relative hidden min-h-screen overflow-hidden bg-[#10231c] text-white lg:block">
+        <div className="pointer-events-none absolute -bottom-[360px] -right-[180px] h-[760px] w-[760px] rounded-full border border-[#283d31]" />
+
+        <div className="pointer-events-none absolute -bottom-[300px] -right-[120px] h-[610px] w-[610px] rounded-full border border-[#354a29]" />
+
+        <div className="pointer-events-none absolute -bottom-[230px] -right-[60px] h-[470px] w-[470px] rounded-full border border-[#71852e]/60" />
+
+        <div className="absolute left-10 top-10">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#d8ff3e] text-sm font-bold text-[#10231c]">
+              F
+            </div>
+
+            <span className="text-[15px] font-semibold tracking-tight">
+              FinlyApp
             </span>
           </div>
+        </div>
 
-          <h1 className="text-3xl font-semibold tracking-tight text-[var(--color-text)]">
-            gasto claro
+        <div className="absolute left-10 right-10 top-[19%] max-w-[500px]">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#b9c7bf]">
+            Clareza para o seu dinheiro
+          </p>
+
+          <h1 className="mt-5 text-[64px] font-light leading-[0.96] tracking-[-0.055em] text-[#f5f7ef]">
+            Gaste
+            <br />
+            melhor.
+            <br />
+            <span className="italic">Viva leve.</span>
           </h1>
 
-          <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-            Comece a cuidar melhor do seu dinheiro.
+          <p className="mt-7 max-w-[350px] text-[15px] leading-6 text-[#b8c8c0]">
+            Um jeito mais humano de entender para onde o
+            seu dinheiro está indo — sem planilhas e sem
+            culpa.
           </p>
         </div>
 
-        <section className="rounded-[28px] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm sm:p-8">
+        <div className="absolute bottom-10 left-10 right-10">
+          <div className="h-px bg-white/10" />
+
+          <div className="relative mt-7 w-[310px] overflow-hidden rounded-2xl border border-white/15 bg-white/[0.04] px-3 py-3">
+            <div className="pointer-events-none absolute -bottom-[170px] -right-[90px] h-[300px] w-[300px] rounded-full border border-[#283d31]" />
+
+            <div className="pointer-events-none absolute -bottom-[140px] -right-[65px] h-[250px] w-[250px] rounded-full border border-[#354a29]" />
+
+            <div className="relative flex items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#d8ff3e] text-[#10231c]">
+                <Sparkles size={15} />
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-white">
+                  Seu dinheiro, mais claro.
+                </p>
+
+                <p className="mt-0.5 text-[10px] text-[#9fb0a7]">
+                  Uma visão simples para decisões melhores.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f7f7f0] px-6 py-10 sm:px-10">
+        <div className="pointer-events-none absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-[#d8ff3e]/10 blur-3xl" />
+
+        <div className="relative w-full max-w-[390px]">
           <div className="mb-7">
-            <h2 className="text-xl font-semibold text-[var(--color-text)]">
-              Criar sua conta
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#637069]">
+              Comece agora
+            </p>
+
+            <h2 className="mt-4 text-[32px] font-normal tracking-[-0.04em] text-[#10231c]">
+              Crie sua conta.
             </h2>
 
-            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-              Preencha seus dados para começar.
+            <p className="mt-3 max-w-[360px] text-[13px] leading-5 text-[#748078]">
+              Tenha uma visão mais clara da sua vida financeira
+              em poucos passos.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="name"
-                className="mb-2 block text-sm font-medium text-[var(--color-text)]"
-              >
-                Nome
-              </label>
-
-              <div className="relative">
-                <User
-                  size={18}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]"
-                />
-
-                <input
-                  id="name"
-                  type="text"
-                  value={nome}
-                  onChange={(event) => setNome(event.target.value)}
-                  placeholder="Seu nome"
-                  required
-                  className="h-12 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] pl-11 pr-4 text-sm text-[var(--color-text)] outline-none transition focus:border-[var(--color-primary-dark)] focus:ring-2 focus:ring-[var(--color-primary)]/30"
-                />
+          {success ? (
+            <div className="rounded-2xl border border-[#d9e5bd] bg-white/80 p-6 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#d8ff3e] text-[#10231c]">
+                <CheckCircle2 size={23} />
               </div>
-            </div>
 
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-2 block text-sm font-medium text-[var(--color-text)]"
-              >
-                E-mail
-              </label>
+              <h3 className="mt-4 text-base font-semibold text-[#10231c]">
+                Conta criada com sucesso!
+              </h3>
 
-              <div className="relative">
-                <Mail
-                  size={18}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]"
-                />
-
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="seu@email.com"
-                  required
-                  className="h-12 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] pl-11 pr-4 text-sm text-[var(--color-text)] outline-none transition focus:border-[var(--color-primary-dark)] focus:ring-2 focus:ring-[var(--color-primary)]/30"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="mb-2 block text-sm font-medium text-[var(--color-text)]"
-              >
-                Senha
-              </label>
-
-              <div className="relative">
-                <LockKeyhole
-                  size={18}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]"
-                />
-
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={senha}
-                  onChange={(event) => setSenha(event.target.value)}
-                  placeholder="Crie uma senha"
-                  required
-                  className="h-12 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] pl-11 pr-12 text-sm text-[var(--color-text)] outline-none transition focus:border-[var(--color-primary-dark)] focus:ring-2 focus:ring-[var(--color-primary)]/30"
-                />
-
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((value) => !value)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] transition hover:text-[var(--color-text)]"
-                  aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="confirm-password"
-                className="mb-2 block text-sm font-medium text-[var(--color-text)]"
-              >
-                Confirmar senha
-              </label>
-
-              <div className="relative">
-                <LockKeyhole
-                  size={18}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]"
-                />
-
-                <input
-                  id="confirm-password"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={confirmarSenha}
-                  onChange={(event) => setConfirmarSenha(event.target.value)}
-                  placeholder="Repita sua senha"
-                  required
-                  className="h-12 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] pl-11 pr-12 text-sm text-[var(--color-text)] outline-none transition focus:border-[var(--color-primary-dark)] focus:ring-2 focus:ring-[var(--color-primary)]/30"
-                />
-
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword((value) => !value)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] transition hover:text-[var(--color-text)]"
-                  aria-label={
-                    showConfirmPassword
-                      ? 'Ocultar confirmação de senha'
-                      : 'Mostrar confirmação de senha'
-                  }
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff size={18} />
-                  ) : (
-                    <Eye size={18} />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {error && (
-              <p className="rounded-xl bg-[var(--color-negative)]/10 px-4 py-3 text-sm text-[var(--color-negative)]">
-                {error}
+              <p className="mt-2 text-xs leading-5 text-[#748078]">
+                Você será redirecionada para a tela de login.
               </p>
-            )}
+            </div>
+          ) : (
+            <>
+              <form onSubmit={handleSubmit}>
+                <div>
+                  <label
+                    htmlFor="nome"
+                    className="mb-2 block text-[11px] font-semibold text-[#34433b]"
+                  >
+                    Nome
+                  </label>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="mt-2 h-12 w-full rounded-xl bg-[var(--color-surface-dark)] text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {loading ? 'Criando conta...' : 'Criar conta'}
-            </button>
-          </form>
+                  <div className="relative">
+                    <UserRound
+                      size={15}
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#98a39d]"
+                    />
 
-          <div className="mt-6 text-center text-sm text-[var(--color-text-secondary)]">
-            Já possui uma conta?{' '}
-            <Link
-              to="/login"
-              className="font-semibold text-[var(--color-text)] underline decoration-[var(--color-primary)] decoration-2 underline-offset-4 transition hover:opacity-70"
-            >
-              Entrar
-            </Link>
-          </div>
-        </section>
+                    <input
+                      id="nome"
+                      type="text"
+                      value={nome}
+                      onChange={(event) => setNome(event.target.value)}
+                      placeholder="Seu nome"
+                      required
+                      autoComplete="name"
+                      className="h-[47px] w-full rounded-xl border border-[#d9ded7] bg-white/70 pl-11 pr-4 text-[13px] text-[#10231c] outline-none transition placeholder:text-[#a5aea8] focus:border-[#a8c72c] focus:bg-white focus:ring-2 focus:ring-[#d8ff3e]/20"
+                    />
+                  </div>
+                </div>
 
-        <p className="mt-6 text-center text-xs text-[var(--color-text-secondary)]">
-          Suas finanças, mais claras.
-        </p>
-      </div>
+                <div className="mt-4">
+                  <label
+                    htmlFor="email"
+                    className="mb-2 block text-[11px] font-semibold text-[#34433b]"
+                  >
+                    E-mail
+                  </label>
+
+                  <div className="relative">
+                    <Mail
+                      size={15}
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#98a39d]"
+                    />
+
+                    <input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      placeholder="voce@email.com"
+                      required
+                      autoComplete="email"
+                      className="h-[47px] w-full rounded-xl border border-[#d9ded7] bg-white/70 pl-11 pr-4 text-[13px] text-[#10231c] outline-none transition placeholder:text-[#a5aea8] focus:border-[#a8c72c] focus:bg-white focus:ring-2 focus:ring-[#d8ff3e]/20"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label
+                    htmlFor="password"
+                    className="mb-2 block text-[11px] font-semibold text-[#34433b]"
+                  >
+                    Senha
+                  </label>
+
+                  <div className="relative">
+                    <LockKeyhole
+                      size={15}
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#98a39d]"
+                    />
+
+                    <input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={senha}
+                      onChange={(event) => setSenha(event.target.value)}
+                      placeholder="••••••••"
+                      required
+                      autoComplete="new-password"
+                      className="h-[47px] w-full rounded-xl border border-[#d9ded7] bg-white/70 pl-11 pr-12 text-[13px] text-[#10231c] outline-none transition placeholder:text-[#a5aea8] focus:border-[#a8c72c] focus:bg-white focus:ring-2 focus:ring-[#d8ff3e]/20"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowPassword((value) => !value)
+                      }
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#89958e] transition hover:text-[#10231c]"
+                      aria-label={
+                        showPassword
+                          ? 'Ocultar senha'
+                          : 'Mostrar senha'
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeOff size={16} />
+                      ) : (
+                        <Eye size={16} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label
+                    htmlFor="confirmarSenha"
+                    className="mb-2 block text-[11px] font-semibold text-[#34433b]"
+                  >
+                    Confirmar senha
+                  </label>
+
+                  <div className="relative">
+                    <LockKeyhole
+                      size={15}
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#98a39d]"
+                    />
+
+                    <input
+                      id="confirmarSenha"
+                      type={
+                        showConfirmPassword ? 'text' : 'password'
+                      }
+                      value={confirmarSenha}
+                      onChange={(event) =>
+                        setConfirmarSenha(event.target.value)
+                      }
+                      placeholder="••••••••"
+                      required
+                      autoComplete="new-password"
+                      className="h-[47px] w-full rounded-xl border border-[#d9ded7] bg-white/70 pl-11 pr-12 text-[13px] text-[#10231c] outline-none transition placeholder:text-[#a5aea8] focus:border-[#a8c72c] focus:bg-white focus:ring-2 focus:ring-[#d8ff3e]/20"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword(
+                          (value) => !value,
+                        )
+                      }
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#89958e] transition hover:text-[#10231c]"
+                      aria-label={
+                        showConfirmPassword
+                          ? 'Ocultar senha'
+                          : 'Mostrar senha'
+                      }
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff size={16} />
+                      ) : (
+                        <Eye size={16} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="mt-4 rounded-xl border border-[#e5c9c5] bg-[#fff4f2] px-4 py-3">
+                    <p className="text-xs font-medium text-[#9b4d43]">
+                      Não foi possível criar sua conta
+                    </p>
+
+                    <p className="mt-1 text-[11px] leading-4 text-[#a9675f]">
+                      {error}
+                    </p>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="mt-5 flex h-[47px] w-full items-center justify-center gap-3 rounded-xl bg-[#d8ff3e] text-[12px] font-semibold text-[#10231c] shadow-[0_8px_24px_rgba(160,190,40,0.18)] transition hover:bg-[#cffa25] hover:shadow-[0_10px_28px_rgba(160,190,40,0.25)] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {loading ? 'Criando conta...' : 'Criar minha conta'}
+
+                  {!loading && <ArrowRight size={17} />}
+                </button>
+              </form>
+
+              <p className="mt-6 text-center text-[11px] text-[#7d8983]">
+                Já tem uma conta?{' '}
+                <Link
+                  to="/login"
+                  className="font-semibold text-[#52741e] transition hover:text-[#10231c]"
+                >
+                  Entrar agora
+                </Link>
+              </p>
+
+              <div className="mt-6 flex gap-3 rounded-2xl bg-[#eef1e8] px-4 py-3">
+                <ShieldCheck
+                  size={15}
+                  className="mt-0.5 shrink-0 text-[#6c9825]"
+                />
+
+                <p className="text-[10px] leading-4 text-[#718078]">
+                  Seus dados estão seguros com a gente.
+                  Cuidamos das suas informações com segurança e privacidade.
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+      </section>
     </main>
   )
 }
