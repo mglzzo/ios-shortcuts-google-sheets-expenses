@@ -6,7 +6,6 @@ import docsRoutes from "./docs/docs.routes.js";
 import categoryRoutes from "./categories/category.routes.js";
 import accountRoutes from "./accounts/account.routes.js";
 import pluggyRoutes from "./Pluggy/pluggy.routes.js";
-
 const app = express();
 
 app.use((req, res, next) => {
