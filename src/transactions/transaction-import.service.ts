@@ -13,6 +13,8 @@ export interface TransacaoImportada {
   metodoPagamento?: string;
   categoria?: string;
   observacao?: string;
+  parcelaAtual?: number;
+  parcelaTotal?: number;
 }
 
 export interface PreviewImportacao {
@@ -34,6 +36,8 @@ interface MapaColunas {
   metodoPagamento?: number;
   categoria?: number;
   observacao?: number;
+  parcelaAtual?: number;
+  parcelaTotal?: number;
 }
 
 function formatarData(data: Date): string {
@@ -231,6 +235,21 @@ function criarMapaColunas(
     ) {
       mapa.observacao = numeroColuna;
     }
+    if (
+  nome === "parcela atual" ||
+  nome === "parcela_atual" ||
+  nome === "parcela atual numero"
+) {
+  mapa.parcelaAtual = numeroColuna;
+}
+
+if (
+  nome === "parcela total" ||
+  nome === "parcela_total" ||
+  nome === "total parcelas"
+) {
+  mapa.parcelaTotal = numeroColuna;
+}
   });
 
   return mapa;
@@ -371,6 +390,51 @@ export async function converterExcelParaPreview(
             ).trim()
           : null;
 
+      const parcelaAtualBruta = mapaColunas.parcelaAtual
+      ? row.getCell(mapaColunas.parcelaAtual).value
+      : null;
+
+    const parcelaTotalBruta = mapaColunas.parcelaTotal
+      ? row.getCell(mapaColunas.parcelaTotal).value
+      : null;
+
+    const parcelaAtualTexto =
+      valorCelulaParaString(parcelaAtualBruta).trim();
+
+    const parcelaTotalTexto =
+      valorCelulaParaString(parcelaTotalBruta).trim();
+
+    const parcelaAtual = parcelaAtualTexto
+      ? Number(parcelaAtualTexto)
+      : undefined;
+
+    const parcelaTotal = parcelaTotalTexto
+      ? Number(parcelaTotalTexto)
+      : undefined;
+
+    if (
+      parcelaAtual !== undefined &&
+      (!Number.isInteger(parcelaAtual) || parcelaAtual < 1)
+    ) {
+      throw new Error("Parcela atual inválida.");
+    }
+
+    if (
+      parcelaTotal !== undefined &&
+      (!Number.isInteger(parcelaTotal) || parcelaTotal < 1)
+    ) {
+      throw new Error("Parcela total inválida.");
+    }
+
+    if (
+      parcelaAtual !== undefined &&
+      parcelaTotal !== undefined &&
+      parcelaAtual > parcelaTotal
+    ) {
+      throw new Error(
+        "A parcela atual não pode ser maior que o total de parcelas."
+      );
+    }
       transacoes.push({
   data,
   estabelecimento,
@@ -383,6 +447,12 @@ export async function converterExcelParaPreview(
     : {}),
   ...(observacao
     ? { observacao }
+    : {}),
+  ...(parcelaAtual !== undefined
+    ? { parcelaAtual }
+    : {}),
+  ...(parcelaTotal !== undefined
+    ? { parcelaTotal }
     : {}),
 });
     } catch (error) {
@@ -492,7 +562,9 @@ export async function confirmarImportacao(
         categoriaId,
         observacao:
           transacao.observacao ?? null,
-        origem: "manual",
+          parcelaAtual: transacao.parcelaAtual ?? null,
+          parcelaTotal: transacao.parcelaTotal ?? null,
+          origem: "manual",
       });
     } catch (error) {
       erros.push({
