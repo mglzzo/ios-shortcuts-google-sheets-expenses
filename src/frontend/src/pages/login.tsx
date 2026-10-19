@@ -223,7 +223,7 @@ function Login() {
               disabled={loading}
               className="mt-5 flex h-[47px] w-full items-center justify-center gap-3 rounded-xl bg-[#d8ff3e] text-[12px] font-semibold text-[#10231c] shadow-[0_8px_24px_rgba(160,190,40,0.18)] transition hover:bg-[#cffa25] hover:shadow-[0_10px_28px_rgba(160,190,40,0.25)] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? 'Entrando...' : 'Entrar no Gasto Claro'}
+              {loading ? 'Entrando...' : 'Entrar'}
 
               {!loading && <ArrowRight size={17} />}
             </button>

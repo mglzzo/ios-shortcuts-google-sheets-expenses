@@ -7,16 +7,16 @@ import {
   LogOut,
   MoreHorizontal,
   PieChart,
-  Plus,
   Receipt,
   Settings,
   ShoppingBag,
+  TrendingDown,
   TrendingUp,
   Wallet,
   X,
-  Zap,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { getMe } from '../services/auth'
 import {
@@ -30,6 +30,18 @@ interface Usuario {
   email: string
 }
 
+let dashboardCache: {
+  token: string
+  usuario: Usuario
+  transacoes: Transaction[]
+} | null = null
+
+let dashboardRequest: Promise<{
+  token: string
+  usuario: Usuario
+  transacoes: Transaction[]
+}> | null = null
+
 function formatCurrency(value: number) {
   return value.toLocaleString('pt-BR', {
     style: 'currency',
@@ -39,71 +51,368 @@ function formatCurrency(value: number) {
 }
 
 function formatDate(date: string) {
-  const parsedDate = new Date(`${date}T00:00:00`)
-
-  return parsedDate.toLocaleDateString('pt-BR', {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: 'short',
   })
 }
 
+function getMonthKey(date: string) {
+  return date.slice(0, 7)
+}
+
+function getMonthLabel(month: string) {
+  const [year, monthNumber] = month.split('-').map(Number)
+
+  return new Date(year, monthNumber - 1, 1).toLocaleDateString('pt-BR', {
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
+function getValue(value: string | number) {
+  const number = Number(value)
+  return Number.isFinite(number) ? number : 0
+}
+
 function Dashboard() {
-  const [usuario, setUsuario] = useState<Usuario | null>(null)
-  const [transacoes, setTransacoes] = useState<Transaction[]>([])
-  const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
+
+  const tokenAtual = localStorage.getItem('token') || ''
+  const cacheInicial =
+    dashboardCache?.token === tokenAtual ? dashboardCache : null
+
+  const [usuario, setUsuario] = useState<Usuario | null>(
+    cacheInicial?.usuario ?? null,
+  )
+  const [transacoes, setTransacoes] = useState<Transaction[]>(
+    cacheInicial?.transacoes ?? [],
+  )
+  const [loading, setLoading] = useState(!cacheInicial)
   const [error, setError] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [monthMenuOpen, setMonthMenuOpen] = useState(false)
   const [selectedCard, setSelectedCard] = useState<string | null>(null)
+  const [selectedMonth, setSelectedMonth] = useState(
+    getMonthKey(new Date().toISOString()),
+  )
 
   useEffect(() => {
+    let ativo = true
+    const token = localStorage.getItem('token') || ''
+
+    if (!token) {
+      setLoading(false)
+      setError('Usuário não autenticado.')
+      return () => {
+        ativo = false
+      }
+    }
+
+    if (dashboardCache?.token === token) {
+      setUsuario(dashboardCache.usuario)
+      setTransacoes(dashboardCache.transacoes)
+      setLoading(false)
+      return () => {
+        ativo = false
+      }
+    }
+
     async function carregarDashboard() {
       try {
-        const [dadosUsuario, dadosTransacoes] = await Promise.all([
-          getMe(),
-          getTransactions(1, 50),
-        ])
+        setError('')
 
-        setUsuario(dadosUsuario)
-        setTransacoes(dadosTransacoes.data ?? [])
+        if (!dashboardRequest) {
+          dashboardRequest = (async () => {
+            const dadosUsuario = await getMe()
+            const primeiraPagina = await getTransactions(1, 50)
+            const dados = [...(primeiraPagina.data ?? [])]
+            let pagina = primeiraPagina.page
+
+            while (primeiraPagina.hasMore) {
+              pagina += 1
+              const proximaPagina = await getTransactions(pagina, 50)
+              dados.push(...(proximaPagina.data ?? []))
+
+              if (!proximaPagina.hasMore) {
+                break
+              }
+            }
+
+            return {
+              token,
+              usuario: dadosUsuario,
+              transacoes: dados,
+            }
+          })()
+        }
+
+        const resultado = await dashboardRequest
+
+        if (resultado.token === token) {
+          dashboardCache = resultado
+        }
+
+        if (ativo) {
+          setUsuario(resultado.usuario)
+          setTransacoes(resultado.transacoes)
+        }
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Não foi possível carregar seus dados.',
-        )
+        if (ativo) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : 'Não foi possível carregar seus dados.',
+          )
+        }
       } finally {
-        setLoading(false)
+        dashboardRequest = null
+
+        if (ativo) {
+          setLoading(false)
+        }
       }
     }
 
     carregarDashboard()
+
+    return () => {
+      ativo = false
+    }
   }, [])
 
   const nome = usuario?.nome?.split(' ')[0] || 'usuário'
 
-  const mesAtual = new Date().toLocaleDateString('pt-BR', {
-    month: 'long',
-    year: 'numeric',
-  })
+  const meses = useMemo(() => {
+    const hoje = new Date()
 
-  const mesFormatado =
-    mesAtual.charAt(0).toUpperCase() + mesAtual.slice(1)
+    return Array.from({ length: 4 }, (_, index) => {
+      const data = new Date(
+        hoje.getFullYear(),
+        hoje.getMonth() - index,
+        1,
+      )
 
-  const saldo = 0
-  const entradas = 0
-  const saidas = 0
+      return `${data.getFullYear()}-${String(
+        data.getMonth() + 1,
+      ).padStart(2, '0')}`
+    })
+  }, [])
 
-  const transacoesRecentes = useMemo(
-    () => transacoes.slice(0, 5),
-    [transacoes],
+  const transacoesDoMes = useMemo(
+    () =>
+      transacoes.filter(
+        (transacao) => getMonthKey(transacao.data) === selectedMonth,
+      ),
+    [transacoes, selectedMonth],
+  )
+
+  const entradas = useMemo(
+    () =>
+      transacoesDoMes.reduce((total, transacao) => {
+        const valor = getValue(transacao.valor)
+        return total + (valor > 0 ? valor : 0)
+      }, 0),
+    [transacoesDoMes],
+  )
+
+  const saidas = useMemo(
+    () =>
+      transacoesDoMes.reduce((total, transacao) => {
+        const valor = getValue(transacao.valor)
+        return total + (valor < 0 ? Math.abs(valor) : 0)
+      }, 0),
+    [transacoesDoMes],
+  )
+
+  const gastosCartao = useMemo(
+    () =>
+      transacoesDoMes.reduce((total, transacao) => {
+        const metodo = String(transacao.metodoPagamento || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .trim()
+          .toUpperCase()
+        const valor = getValue(transacao.valor)
+
+        return metodo === 'CARTAO' && valor < 0
+          ? total + Math.abs(valor)
+          : total
+      }, 0),
+    [transacoesDoMes],
+  )
+
+  const economia = entradas - saidas
+
+  const percentualEconomia =
+    entradas > 0 ? Math.round((economia / entradas) * 100) : 0
+
+  const categorias = useMemo(() => {
+    const mapa = new Map<string, number>()
+
+    transacoesDoMes.forEach((transacao) => {
+      const valor = getValue(transacao.valor)
+
+      if (valor >= 0) {
+        return
+      }
+
+      const categoria = transacao.categoria || 'Outros'
+      mapa.set(
+        categoria,
+        (mapa.get(categoria) || 0) + Math.abs(valor),
+      )
+    })
+
+    return Array.from(mapa.entries())
+      .map(([nome, valor]) => ({ nome, valor }))
+      .sort((a, b) => b.valor - a.valor)
+  }, [transacoesDoMes])
+
+  const totalCategorias = categorias.reduce(
+    (total, categoria) => total + categoria.valor,
+    0,
+  )
+
+  const despesasDoMes = useMemo(
+    () =>
+      [...transacoesDoMes]
+        .filter((transacao) => getValue(transacao.valor) < 0)
+        .sort((a, b) => Math.abs(getValue(b.valor)) - Math.abs(getValue(a.valor))),
+    [transacoesDoMes],
+  )
+
+  const transacoesDetalhe = useMemo(() => {
+    switch (selectedCard) {
+      case 'cartao':
+        return transacoesDoMes.filter(
+          (transacao) =>
+            getValue(transacao.valor) < 0 &&
+            transacao.metodoPagamento?.trim().toUpperCase() === 'CARTAO',
+        )
+      case 'entradas':
+        return transacoesDoMes.filter((transacao) => getValue(transacao.valor) > 0)
+      case 'saidas':
+      case 'categorias':
+        return despesasDoMes
+      case 'economia':
+      case 'atividades':
+        return [...transacoesDoMes].sort((a, b) => b.data.localeCompare(a.data))
+      case 'maior':
+        return despesasDoMes
+      default:
+        return []
+    }
+  }, [selectedCard, transacoesDoMes, despesasDoMes])
+
+  const maiorGasto = useMemo(
+    () =>
+      [...transacoesDoMes]
+        .filter((transacao) => getValue(transacao.valor) < 0)
+        .sort(
+          (a, b) =>
+            Math.abs(getValue(b.valor)) -
+            Math.abs(getValue(a.valor)),
+        )[0] || null,
+    [transacoesDoMes],
+  )
+
+  const parcelasProximas = useMemo(() => {
+    const hoje = new Date()
+    hoje.setHours(0, 0, 0, 0)
+
+    return [...transacoes]
+      .map((transacao) => {
+        const item = transacao as Transaction & {
+          parcelaAtual?: number | string | null
+          parcelaTotal?: number | string | null
+        }
+
+        return {
+          ...transacao,
+          parcelaAtual: Number(item.parcelaAtual),
+          parcelaTotal: Number(item.parcelaTotal),
+        }
+      })
+      .filter((transacao) => {
+        const data = new Date(`${transacao.data.slice(0, 10)}T00:00:00`)
+
+        return (
+          !Number.isNaN(data.getTime()) &&
+          data > hoje &&
+          transacao.parcelaTotal > 1 &&
+          transacao.parcelaAtual > 0 &&
+          transacao.parcelaAtual <= transacao.parcelaTotal
+        )
+      })
+      .sort((a, b) => a.data.localeCompare(b.data))
+      .slice(0, 3)
+  }, [transacoes])
+
+  const atividadesRecentes = useMemo(() => {
+    const hoje = new Date()
+    hoje.setHours(23, 59, 59, 999)
+
+    return [...transacoesDoMes]
+      .filter((transacao) => {
+        const data = new Date(`${transacao.data.slice(0, 10)}T00:00:00`)
+        return !Number.isNaN(data.getTime()) && data <= hoje
+      })
+      .sort((a, b) => {
+        const dataA = new Date(`${a.data.slice(0, 10)}T00:00:00`).getTime()
+        const dataB = new Date(`${b.data.slice(0, 10)}T00:00:00`).getTime()
+
+        return dataB - dataA
+      })
+      .slice(0, 3)
+  }, [transacoesDoMes])
+
+  const fluxo = useMemo(() => {
+    const [ano, mes] = selectedMonth.split('-').map(Number)
+    const resultado = []
+
+    for (let i = 3; i >= 0; i -= 1) {
+      const data = new Date(ano, mes - 1 - i, 1)
+      const chave = `${data.getFullYear()}-${String(
+        data.getMonth() + 1,
+      ).padStart(2, '0')}`
+
+      const doMes = transacoes.filter(
+        (transacao) => getMonthKey(transacao.data) === chave,
+      )
+
+      const entrada = doMes.reduce((total, transacao) => {
+        const valor = getValue(transacao.valor)
+        return total + (valor > 0 ? valor : 0)
+      }, 0)
+
+      const saida = doMes.reduce((total, transacao) => {
+        const valor = getValue(transacao.valor)
+        return total + (valor < 0 ? Math.abs(valor) : 0)
+      }, 0)
+
+      resultado.push({
+        chave,
+        nome: data.toLocaleDateString('pt-BR', { month: 'short' }),
+        entrada,
+        saida,
+      })
+    }
+
+    return resultado
+  }, [transacoes, selectedMonth])
+
+  const maiorFluxo = Math.max(
+    ...fluxo.map((item) => Math.max(item.entrada, item.saida)),
+    1,
   )
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f7f7f0]">
-        <div className="text-sm text-[#68736d]">
+        <span className="text-sm text-[#68736d]">
           Carregando seu financeiro...
-        </div>
+        </span>
       </div>
     )
   }
@@ -115,27 +424,21 @@ function Dashboard() {
           <h1 className="text-lg font-semibold text-[#10231c]">
             Não foi possível carregar sua conta
           </h1>
-
-          <p className="mt-2 text-sm text-[#68736d]">
-            {error}
-          </p>
+          <p className="mt-2 text-sm text-[#68736d]">{error}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f7f0] text-[#10231c]">
+    <div className="fixed inset-0 h-screen w-screen overflow-hidden bg-[#f7f7f0] text-[#10231c]">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[232px] flex-col bg-[#10231c] text-white lg:flex">
         <div className="flex h-24 items-center px-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#d8ff3e] text-[15px] font-semibold tracking-[-0.04em] text-[#10231c]">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#d8ff3e] text-[15px] font-semibold text-[#10231c]">
               F
             </div>
-
-            <span className="text-[15px] font-semibold">
-              FinlyApp
-            </span>
+            <span className="text-[15px] font-semibold">FinlyApp</span>
           </div>
         </div>
 
@@ -155,10 +458,11 @@ function Dashboard() {
 
             <button
               type="button"
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-[#d5ddd8] transition hover:bg-white/5"
+              onClick={() => navigate('/conexoes')}
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-[#8fa098] transition hover:bg-white/5 hover:text-white"
             >
               <Link2 size={17} />
-              Conectar ferramenta
+              Conexões
             </button>
 
             <button
@@ -167,10 +471,6 @@ function Dashboard() {
             >
               <PieChart size={17} />
               Análises
-
-              <span className="ml-auto text-[8px] uppercase text-[#81928a]">
-                em breve
-              </span>
             </button>
           </nav>
         </div>
@@ -181,7 +481,7 @@ function Dashboard() {
               <div className="absolute bottom-[58px] -left-[8px] right-0 z-50 rounded-xl border border-white/10 bg-[#182c24] p-2 shadow-xl">
                 <button
                   type="button"
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs text-[#d5ddd8] transition hover:bg-white/5 hover:text-white"
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs text-[#d5ddd8]"
                 >
                   <Settings size={15} />
                   Configurações
@@ -193,7 +493,7 @@ function Dashboard() {
                     localStorage.removeItem('token')
                     window.location.href = '/login'
                   }}
-                  className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs text-[#d5ddd8] transition hover:bg-white/5 hover:text-white"
+                  className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs text-[#d5ddd8]"
                 >
                   <LogOut size={15} />
                   Sair
@@ -210,17 +510,12 @@ function Dashboard() {
                 <p className="truncate text-xs font-semibold">
                   {usuario?.nome}
                 </p>
-
-                <p className="mt-0.5 text-[10px] text-[#8fa098]">
-                  Plano essencial
-                </p>
               </div>
 
               <button
                 type="button"
                 onClick={() => setMenuOpen((value) => !value)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 text-[#8fa098] transition hover:bg-white/5 hover:text-white"
-                aria-label="Abrir menu do usuário"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 text-[#8fa098]"
               >
                 <MoreHorizontal size={17} />
               </button>
@@ -229,73 +524,89 @@ function Dashboard() {
         </div>
       </aside>
 
-      <main className="min-h-screen lg:ml-[232px]">
-        <header className="flex items-center justify-between px-5 py-5 sm:px-8 lg:px-11 lg:py-8">
+      <main className="h-screen overflow-hidden lg:ml-[232px]">
+        <header className="px-5 py-5 sm:px-8 lg:px-11 lg:py-8">
           <div className="lg:hidden">
             <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#d8ff3e] text-[14px] font-semibold tracking-[-0.04em] text-[#10231c]">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#d8ff3e] text-[14px] font-semibold text-[#10231c]">
                 F
               </div>
-
-              <span className="text-sm font-semibold">
-                FinlyApp
-              </span>
+              <span className="text-sm font-semibold">FinlyApp</span>
             </div>
           </div>
-
-          
         </header>
 
-        <div className="mx-auto max-w-[1200px] px-5 pb-10 sm:px-8 lg:px-11">
-          <section className="mb-7 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mx-auto max-w-[1200px] px-5 pb-3 sm:px-8 lg:px-11">
+          <section className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7d8983]">
-                {new Date()
-                  .toLocaleDateString('pt-BR', {
-                    weekday: 'long',
-                    day: '2-digit',
-                    month: 'long',
-                    year: 'numeric',
-                  })
-                  .toUpperCase()}
+                {new Date().toLocaleDateString('pt-BR', {
+                  weekday: 'long',
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                })}
               </p>
 
-              <h1 className="mt-2 text-[34px] font-normal tracking-[-0.04em] text-[#10231c] sm:text-[42px]">
+              <h1 className="mt-2 text-[34px] font-normal tracking-[-0.04em] sm:text-[42px]">
                 Bom dia, {nome}.
               </h1>
-
-              <p className="mt-1 text-sm text-[#68736d]">
-                Aqui está um retrato gentil do seu dinheiro este mês.
-              </p>
             </div>
 
-            <button
-              type="button"
-              className="flex w-fit items-center gap-3 rounded-xl border border-[#dfe3dc] bg-white px-4 py-3 text-sm font-medium"
-            >
-              {mesFormatado}
+            <div className="relative z-30">
+              <button
+                type="button"
+                aria-label="Selecionar mês"
+                aria-expanded={monthMenuOpen}
+                onClick={() => setMonthMenuOpen((open) => !open)}
+                className="flex min-w-[190px] items-center justify-between gap-4 rounded-2xl border border-[#dfe3dc] bg-white px-4 py-3.5 text-sm font-semibold capitalize text-[#10231c] shadow-sm transition hover:border-[#b8c4bb] hover:shadow-md focus:outline-none focus:ring-4 focus:ring-[#10231c]/5"
+              >
+                {getMonthLabel(selectedMonth)}
+                <ChevronDown
+                  size={16}
+                  className={`shrink-0 text-[#68736d] transition-transform ${
+                    monthMenuOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
 
-              <ChevronDown
-                size={16}
-                className="text-[#68736d]"
-              />
-            </button>
+              {monthMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-full min-w-[210px] overflow-hidden rounded-2xl border border-[#dfe3dc] bg-white p-1.5 shadow-xl">
+                  {meses.map((mes) => (
+                    <button
+                      key={mes}
+                      type="button"
+                      onClick={() => {
+                        setSelectedMonth(mes)
+                        setMonthMenuOpen(false)
+                      }}
+                      className={`w-full rounded-xl px-3 py-2.5 text-left text-sm capitalize transition ${
+                        selectedMonth === mes
+                          ? 'bg-[#10231c] font-semibold text-white'
+                          : 'text-[#526159] hover:bg-[#f1f4ed]'
+                      }`}
+                    >
+                      {getMonthLabel(mes)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </section>
 
           <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <DashboardCard
-              title="Saldo disponível"
-              value={formatCurrency(saldo)}
-              icon={<Wallet size={17} />}
+              title="Gastos com cartão"
+              value={formatCurrency(gastosCartao)}
+              icon={<CreditCard size={17} />}
               dark
-              onClick={() => setSelectedCard('saldo')}
+              onClick={() => setSelectedCard('cartao')}
             />
 
             <DashboardCard
               title="Entradas"
               value={formatCurrency(entradas)}
-              icon={<Plus size={18} />}
-              subtitle="Sem dados ainda"
+              icon={<TrendingUp size={17} />}
               onClick={() => setSelectedCard('entradas')}
             />
 
@@ -303,74 +614,257 @@ function Dashboard() {
               title="Saídas"
               value={formatCurrency(saidas)}
               icon={<CreditCard size={17} />}
-              subtitle="Sem dados ainda"
               onClick={() => setSelectedCard('saidas')}
             />
 
             <DashboardCard
-              title="Meta mensal"
-              value="—"
-              icon={<Zap size={17} />}
-              subtitle="Configure sua meta"
-              onClick={() => setSelectedCard('meta')}
+              title="Economia no mês"
+              value={formatCurrency(economia)}
+              icon={<Wallet size={17} />}
+              onClick={() => setSelectedCard('economia')}
             />
           </section>
 
           <section className="mt-3 grid gap-3 xl:grid-cols-[1.7fr_1fr]">
-            <div className="rounded-[20px] border border-[#dfe3dc] bg-white p-5 sm:p-6">
+            <div className="min-w-0 rounded-[20px] border border-[#dfe3dc] bg-white p-5 sm:p-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold">
-                  Ritmo financeiro
-                </h2>
-
-                <button
-                  type="button"
-                  className="flex items-center gap-1 text-xs font-medium text-[#64716a]"
-                >
-                  Ver detalhes
-                  <ChevronRight size={14} />
-                </button>
+                <h2 className="text-base font-semibold">Fluxo financeiro</h2>
+                <span className="text-xs text-[#89938e]">
+                  {getMonthLabel(selectedMonth)}
+                </span>
               </div>
 
-              <div className="relative mt-7 h-[220px] overflow-hidden">
-                <div className="absolute inset-x-0 top-0 border-t border-dashed border-[#e1e4dc]" />
-                <div className="absolute inset-x-0 top-1/3 border-t border-dashed border-[#e1e4dc]" />
-                <div className="absolute inset-x-0 top-2/3 border-t border-dashed border-[#e1e4dc]" />
-                <div className="absolute inset-x-0 bottom-0 border-t border-dashed border-[#e1e4dc]" />
+              {transacoes.length === 0 ? (
+                <EmptyState
+                  icon={<TrendingUp size={22} />}
+                  title="Nenhum dado"
+                  description="Adicione transações para visualizar o fluxo financeiro."
+                />
+              ) : (
+                <div className="mt-5">
+                  {(() => {
+                    const chartWidth = 640
+                    const chartHeight = 220
+                    const left = 48
+                    const right = 16
+                    const top = 12
+                    const bottom = 32
+                    const plotWidth = chartWidth - left - right
+                    const plotHeight = chartHeight - top - bottom
+                    const maxValor = Math.max(
+                      ...fluxo.map((item) =>
+                        Math.max(item.entrada, item.saida),
+                      ),
+                      1,
+                    )
+                    const gridMax =
+                      Math.ceil(maxValor / 500) * 500 || 500
+                    const points = fluxo.map((item, index) => {
+                      const x =
+                        left +
+                        (index * plotWidth) /
+                          Math.max(fluxo.length - 1, 1)
 
-                {transacoes.length === 0 && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <TrendingUp
-                        size={22}
-                        className="mx-auto text-[#b8c0ba]"
-                      />
+                      const entradaY =
+                        top +
+                        plotHeight -
+                        (item.entrada / gridMax) * plotHeight
 
-                      <p className="mt-2 text-sm font-medium text-[#68736d]">
-                        Seu gráfico aparecerá aqui
-                      </p>
+                      const saidaY =
+                        top +
+                        plotHeight -
+                        (item.saida / gridMax) * plotHeight
 
-                      <p className="mt-1 text-xs text-[#9aa39e]">
-                        Adicione suas primeiras transações.
-                      </p>
-                    </div>
-                  </div>
-                )}
+                      return {
+                        ...item,
+                        x,
+                        entradaY,
+                        saidaY,
+                      }
+                    })
 
-                <div className="absolute bottom-0 left-0 right-0 flex justify-between text-[10px] text-[#9aa39e]">
-                  {[
-                    'jan',
-                    'fev',
-                    'mar',
-                    'abr',
-                    'mai',
-                    'jun',
-                    'jul',
-                  ].map((mes) => (
-                    <span key={mes}>{mes}</span>
-                  ))}
+                    const entradaPath = points
+                      .map(
+                        (point, index) =>
+                          `${index === 0 ? 'M' : 'L'} ${point.x} ${point.entradaY}`,
+                      )
+                      .join(' ')
+
+                    const saidaPath = points
+                      .map(
+                        (point, index) =>
+                          `${index === 0 ? 'M' : 'L'} ${point.x} ${point.saidaY}`,
+                      )
+                      .join(' ')
+
+                    const ticks = [0, 1, 2, 3, 4].map(
+                      (index) => ({
+                        value: gridMax - (gridMax / 4) * index,
+                        y: top + (plotHeight / 4) * index,
+                      }),
+                    )
+
+                    return (
+                      <div className="w-full overflow-hidden">
+                        <svg
+                          viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+                          className="h-[245px] w-full"
+                          preserveAspectRatio="none"
+                        >
+                          {ticks.map((tick) => (
+                            <g key={tick.y}>
+                              <line
+                                x1={left}
+                                y1={tick.y}
+                                x2={chartWidth - right}
+                                y2={tick.y}
+                                stroke="#e8ebe6"
+                                strokeDasharray="2 4"
+                              />
+                              <text
+                                x={2}
+                                y={tick.y + 4}
+                                fontSize="10"
+                                fill="#9aa39e"
+                              >
+                                {formatCurrency(tick.value)
+                                  .replace(',00', '')
+                                  .replace('R$', 'R$ ')}
+                              </text>
+                            </g>
+                          ))}
+
+                          {points.map((point) => (
+                            <line
+                              key={`vertical-${point.chave}`}
+                              x1={point.x}
+                              y1={top}
+                              x2={point.x}
+                              y2={top + plotHeight}
+                              stroke="#edf0eb"
+                              strokeDasharray="2 4"
+                            />
+                          ))}
+
+                          <path
+                            d={entradaPath}
+                            fill="none"
+                            stroke="#5aa947"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+
+                          <path
+                            d={saidaPath}
+                            fill="none"
+                            stroke="#ff6f5c"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+
+                          {points.map((point) => (
+                            <g key={point.chave}>
+                              <circle
+                                cx={point.x}
+                                cy={point.entradaY}
+                                r="4"
+                                fill="#5aa947"
+                              />
+                              <circle
+                                cx={point.x}
+                                cy={point.saidaY}
+                                r="4"
+                                fill="#ff6f5c"
+                              />
+                              <text
+                                x={point.x}
+                                y={chartHeight - 8}
+                                textAnchor="middle"
+                                fontSize="10"
+                                fill="#9aa39e"
+                              >
+                                {point.nome}
+                              </text>
+                            </g>
+                          ))}
+
+                          {(() => {
+                            const ultimo = points[points.length - 1]
+
+                            if (!ultimo) {
+                              return null
+                            }
+
+                            return (
+                              <>
+                                {ultimo.entrada > 0 && (
+                                  <g>
+                                    <rect
+                                      x={Math.min(
+                                        ultimo.x - 28,
+                                        chartWidth - 76,
+                                      )}
+                                      y={ultimo.entradaY - 25}
+                                      width="66"
+                                      height="20"
+                                      rx="6"
+                                      fill="#5aa947"
+                                    />
+                                    <text
+                                      x={Math.min(
+                                        ultimo.x + 5,
+                                        chartWidth - 43,
+                                      )}
+                                      y={ultimo.entradaY - 11}
+                                      textAnchor="middle"
+                                      fontSize="9"
+                                      fontWeight="600"
+                                      fill="#ffffff"
+                                    >
+                                      {formatCurrency(ultimo.entrada)}
+                                    </text>
+                                  </g>
+                                )}
+
+                                {ultimo.saida > 0 && (
+                                  <g>
+                                    <rect
+                                      x={Math.min(
+                                        ultimo.x - 28,
+                                        chartWidth - 76,
+                                      )}
+                                      y={ultimo.saidaY + 8}
+                                      width="66"
+                                      height="20"
+                                      rx="6"
+                                      fill="#ff6f5c"
+                                    />
+                                    <text
+                                      x={Math.min(
+                                        ultimo.x + 5,
+                                        chartWidth - 43,
+                                      )}
+                                      y={ultimo.saidaY + 22}
+                                      textAnchor="middle"
+                                      fontSize="9"
+                                      fontWeight="600"
+                                      fill="#ffffff"
+                                    >
+                                      {formatCurrency(ultimo.saida)}
+                                    </text>
+                                  </g>
+                                )}
+                              </>
+                            )
+                          })()}
+                        </svg>
+                      </div>
+                    )
+                  })()}
                 </div>
-              </div>
+              )}
 
               <div className="mt-4 flex gap-5 text-[11px] text-[#68736d]">
                 <span className="flex items-center gap-2">
@@ -385,151 +879,337 @@ function Dashboard() {
               </div>
             </div>
 
-            <div className="rounded-[20px] border border-[#dfe3dc] bg-white p-5 sm:p-6">
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => setSelectedCard('categorias')}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  setSelectedCard('categorias')
+                }
+              }}
+              className="min-w-0 cursor-pointer rounded-[20px] border border-[#dfe3dc] bg-white p-5 transition hover:border-[#b8c4bb] hover:shadow-md sm:p-6"
+            >
               <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold">
-                  Onde você gasta
-                </h2>
-
-                <button
-                  type="button"
-                  className="flex items-center gap-1 text-xs font-medium text-[#64716a]"
-                >
-                  Tudo
-                  <ChevronRight size={14} />
-                </button>
+                <h2 className="text-base font-semibold">Onde você gasta</h2>
+                <span className="text-xs text-[#89938e]">Este mês</span>
               </div>
 
-              {transacoes.length === 0 ? (
-                <div className="flex min-h-[220px] flex-col items-center justify-center text-center">
-                  <Receipt
-                    size={22}
-                    className="text-[#b8c0ba]"
-                  />
-
-                  <p className="mt-3 text-sm font-medium text-[#68736d]">
-                    Nenhuma categoria ainda
-                  </p>
-
-                  <p className="mt-1 max-w-[220px] text-xs leading-5 text-[#9aa39e]">
-                    Quando você começar a registrar seus gastos,
-                    eles aparecerão aqui.
-                  </p>
-                </div>
+              {categorias.length === 0 ? (
+                <EmptyState
+                  icon={<Receipt size={22} />}
+                  title="Nenhum dado"
+                  description="Seus gastos por categoria aparecerão aqui."
+                />
               ) : (
-                <div className="mt-5 space-y-5" />
+                <>
+                  <div
+                    className="mx-auto mt-5 h-[150px] w-[150px] rounded-full"
+                    style={{
+                      background: `conic-gradient(${categorias
+                        .map((categoria, index) => {
+                          const cores = [
+                            '#68b95a',
+                            '#f3c44f',
+                            '#ff9278',
+                            '#8874d8',
+                            '#86a9df',
+                          ]
+
+                          const inicio =
+                            categorias
+                              .slice(0, index)
+                              .reduce(
+                                (total, item) =>
+                                  total +
+                                  (item.valor / totalCategorias) * 100,
+                                0,
+                              )
+
+                          const fim =
+                            inicio +
+                            (categoria.valor / totalCategorias) * 100
+
+                          return `${cores[index % cores.length]} ${inicio}% ${fim}%`
+                        })
+                        .join(', ')})`,
+                    }}
+                  >
+                    <div className="flex h-full items-center justify-center">
+                      <div className="flex h-[90px] w-[90px] flex-col items-center justify-center rounded-full bg-white">
+                        <span className="text-[10px] text-[#89938e]">
+                          em gastos
+                        </span>
+                        <span className="mt-1 text-sm font-semibold">
+                          {formatCurrency(totalCategorias)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 space-y-3">
+                    {categorias.slice(0, 5).map((categoria, index) => {
+                      const cores = [
+                        '#68b95a',
+                        '#f3c44f',
+                        '#ff9278',
+                        '#8874d8',
+                        '#86a9df',
+                      ]
+
+                      const percentual = Math.round(
+                        (categoria.valor / totalCategorias) * 100,
+                      )
+
+                      return (
+                        <div
+                          key={categoria.nome}
+                          className="flex items-center gap-2 text-xs"
+                        >
+                          <span
+                            className="h-2.5 w-2.5 rounded-full"
+                            style={{
+                              backgroundColor:
+                                cores[index % cores.length],
+                            }}
+                          />
+                          <span className="min-w-0 flex-1 truncate text-[#68736d]">
+                            {categoria.nome}
+                          </span>
+                          <span className="font-medium">
+                            {percentual}%
+                          </span>
+                          <span className="w-[82px] text-right text-[#89938e]">
+                            {formatCurrency(categoria.valor)}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </>
               )}
             </div>
           </section>
 
-          <section className="mt-3 rounded-[20px] border border-[#dfe3dc] bg-white p-5 sm:p-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold">
-                Atividade recente
-              </h2>
-
-              <button
-                type="button"
-                className="flex items-center gap-1 text-xs font-medium text-[#64716a]"
-              >
-                Ver todas
-                <ChevronRight size={14} />
-              </button>
-            </div>
-
-            {transacoesRecentes.length === 0 ? (
-              <div className="flex min-h-[130px] items-center justify-center">
-                <div className="text-center">
-                  <Receipt
-                    size={22}
-                    className="mx-auto text-[#b8c0ba]"
-                  />
-
-                  <p className="mt-2 text-sm text-[#68736d]">
-                    Nenhuma atividade recente.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="mt-4 divide-y divide-[#edf0eb]">
-                {transacoesRecentes.map((transacao) => (
-                  <div
-                    key={transacao.id}
-                    className="flex items-center justify-between gap-4 py-4"
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eef2e9]">
-                        <ShoppingBag size={17} />
+          <section className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(210px,0.85fr)_minmax(300px,1.6fr)_minmax(360px,1.7fr)]">
+            <InfoCard title="Contas próximas" onClick={() => setSelectedCard('contas')}>
+              {parcelasProximas.length === 0 ? (
+                <EmptyState
+                  icon={<Receipt size={22} />}
+                  title="Nenhuma parcela próxima"
+                  description="As parcelas futuras aparecerão aqui quando estiverem disponíveis nas transações."
+                />
+              ) : (
+                <div className="space-y-4">
+                  {parcelasProximas.map((parcela) => (
+                    <div
+                      key={parcela.id}
+                      className="flex min-w-0 items-center gap-3"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eef7d2] text-[#10231c]">
+                        <CreditCard size={18} />
                       </div>
 
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">
-                          {transacao.estabelecimento}
+                          {parcela.estabelecimento}
                         </p>
-
                         <p className="mt-1 text-xs text-[#89938e]">
-                          {transacao.categoria ||
-                            'Sem categoria'}{' '}
-                          · {formatDate(transacao.data)}
+                          Parcela {parcela.parcelaAtual} de {parcela.parcelaTotal} ·{' '}
+                          {formatDate(parcela.data)}
                         </p>
                       </div>
+
+                      <p className="shrink-0 text-sm font-semibold text-[#10231c]">
+                        {formatCurrency(Math.abs(getValue(parcela.valor)))}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </InfoCard>
+
+            <InfoCard title="Maior gasto do mês" onClick={() => setSelectedCard('maior')}>
+              {maiorGasto ? (
+                <div className="flex min-h-[170px] flex-col justify-center">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#fff0ec] text-[#e56e55]">
+                      <ShoppingBag size={19} />
                     </div>
 
-                    <p className="shrink-0 text-sm font-semibold">
-                      {formatCurrency(Number(transacao.valor))}
-                    </p>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">
+                        {maiorGasto.estabelecimento}
+                      </p>
+                      <p className="mt-1 text-xs text-[#89938e]">
+                        {maiorGasto.categoria || 'Sem categoria'} ·{' '}
+                        {formatDate(maiorGasto.data)}
+                      </p>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
+
+                  <p className="mt-6 text-[30px] font-semibold tracking-[-0.04em]">
+                    {formatCurrency(
+                      Math.abs(getValue(maiorGasto.valor)),
+                    )}
+                  </p>
+                </div>
+              ) : (
+                <EmptyState
+                  icon={<ShoppingBag size={22} />}
+                  title="Nenhum gasto"
+                  description="Seu maior gasto aparecerá aqui."
+                />
+              )}
+            </InfoCard>
+
+            <InfoCard title="Atividades recentes" onClick={() => setSelectedCard('atividades')}>
+              {atividadesRecentes.length === 0 ? (
+                <EmptyState
+                  icon={<Receipt size={22} />}
+                  title="Nenhuma atividade"
+                  description="Suas atividades recentes aparecerão aqui."
+                />
+              ) : (
+                <div className="divide-y divide-[#edf0eb]">
+                  {atividadesRecentes.map((transacao) => {
+                    const valor = getValue(transacao.valor)
+                    const entrada = valor >= 0
+
+                    return (
+                      <div
+                        key={transacao.id}
+                        className="flex items-center justify-between gap-3 py-2.5"
+                      >
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                              entrada
+                                ? 'bg-[#e9f6df] text-[#5d9b4b]'
+                                : 'bg-[#fff0ec] text-[#e56e55]'
+                            }`}
+                          >
+                            {entrada ? (
+                              <TrendingUp size={16} />
+                            ) : (
+                              <TrendingDown size={16} />
+                            )}
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium">
+                              {transacao.estabelecimento}
+                            </p>
+                            <p className="mt-1 text-xs text-[#89938e]">
+                              {transacao.categoria || 'Sem categoria'} ·{' '}
+                              {formatDate(transacao.data)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <p
+                          className={`shrink-0 text-sm font-semibold ${
+                            entrada
+                              ? 'text-[#5d9b4b]'
+                              : 'text-[#e56e55]'
+                          }`}
+                        >
+                          {entrada ? '+' : '-'}
+                          {formatCurrency(Math.abs(valor))}
+                        </p>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </InfoCard>
           </section>
         </div>
       </main>
 
       {selectedCard && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 p-0 backdrop-blur-[2px] sm:items-center sm:p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-[2px]"
           onClick={() => setSelectedCard(null)}
         >
           <div
-            className="w-full max-w-lg rounded-t-[28px] bg-white p-6 shadow-2xl sm:rounded-[24px]"
+            className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-[24px] bg-white p-5 shadow-2xl sm:p-6"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
-                {selectedCard === 'saldo' &&
-                  'Saldo disponível'}
-                {selectedCard === 'entradas' && 'Entradas'}
-                {selectedCard === 'saidas' && 'Saídas'}
-                {selectedCard === 'meta' && 'Meta mensal'}
-              </h2>
-
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold">
+                  {selectedCard === 'cartao' && 'Gastos com cartão'}
+                  {selectedCard === 'entradas' && 'Entradas'}
+                  {selectedCard === 'saidas' && 'Saídas'}
+                  {selectedCard === 'economia' && 'Economia no mês'}
+                  {selectedCard === 'categorias' && 'Onde você gasta'}
+                  {selectedCard === 'contas' && 'Contas próximas'}
+                  {selectedCard === 'maior' && 'Gastos do mês'}
+                  {selectedCard === 'atividades' && 'Atividades recentes'}
+                </h2>
+                <p className="mt-1 text-xs capitalize text-[#89938e]">
+                  {getMonthLabel(selectedMonth)} · dados da sua conta
+                </p>
+              </div>
               <button
                 type="button"
+                aria-label="Fechar detalhes"
                 onClick={() => setSelectedCard(null)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f3f4ef] text-[#68736d]"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f3f4ef] text-[#68736d]"
               >
                 <X size={17} />
               </button>
             </div>
 
-            <div className="mt-8 text-center">
-              <p className="text-3xl font-semibold tracking-tight">
-                {selectedCard === 'meta'
-                  ? '—'
-                  : formatCurrency(0)}
-              </p>
-
-              <p className="mt-2 text-sm text-[#68736d]">
-                Ainda não existem transações suficientes para
-                apresentar os detalhes.
-              </p>
+            <div className="mt-5 flex-1 overflow-y-auto">
+              {selectedCard === 'contas' ? (
+                parcelasProximas.length === 0 ? (
+                  <EmptyState icon={<Receipt size={22} />} title="Nenhuma conta próxima" description="Não há parcelas futuras disponíveis nos dados retornados pela API." />
+                ) : (
+                  <div className="divide-y divide-[#edf0eb]">
+                    {parcelasProximas.map((parcela) => (
+                      <div key={parcela.id} className="flex items-center justify-between gap-4 py-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{parcela.estabelecimento}</p>
+                          <p className="mt-1 text-xs text-[#89938e]">Parcela {parcela.parcelaAtual} de {parcela.parcelaTotal} · {formatDate(parcela.data)}</p>
+                        </div>
+                        <p className="shrink-0 text-sm font-semibold">{formatCurrency(Math.abs(getValue(parcela.valor)))}</p>
+                      </div>
+                    ))}
+                  </div>
+                )
+              ) : transacoesDetalhe.length === 0 ? (
+                <EmptyState icon={<Receipt size={22} />} title="Nenhuma transação encontrada" description="Não há itens para exibir neste período." />
+              ) : (
+                <div className="divide-y divide-[#edf0eb]">
+                  {transacoesDetalhe.map((transacao) => {
+                    const valor = getValue(transacao.valor)
+                    const entrada = valor > 0
+                    return (
+                      <div key={transacao.id} className="flex items-center justify-between gap-4 py-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{transacao.estabelecimento}</p>
+                          <p className="mt-1 text-xs text-[#89938e]">
+                            {[transacao.categoria || 'Sem categoria', transacao.metodoPagamento || 'Método não informado', formatDate(transacao.data)].join(' · ')}
+                          </p>
+                          {transacao.observacao && <p className="mt-1 truncate text-xs text-[#89938e]">{transacao.observacao}</p>}
+                        </div>
+                        <p className={`shrink-0 text-sm font-semibold ${entrada ? 'text-[#5d9b4b]' : 'text-[#e56e55]'}`}>
+                          {entrada ? '+' : valor < 0 ? '-' : ''}{formatCurrency(Math.abs(valor))}
+                        </p>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
 
             <button
               type="button"
               onClick={() => setSelectedCard(null)}
-              className="mt-8 h-11 w-full rounded-xl bg-[#10231c] text-sm font-semibold text-white"
+              className="mt-5 h-11 w-full shrink-0 rounded-xl bg-[#10231c] text-sm font-semibold text-white"
             >
               Fechar
             </button>
@@ -544,7 +1224,6 @@ interface DashboardCardProps {
   title: string
   value: string
   icon: ReactNode
-  subtitle?: string
   dark?: boolean
   onClick: () => void
 }
@@ -553,7 +1232,6 @@ function DashboardCard({
   title,
   value,
   icon,
-  subtitle,
   dark = false,
   onClick,
 }: DashboardCardProps) {
@@ -561,7 +1239,7 @@ function DashboardCard({
     <button
       type="button"
       onClick={onClick}
-      className={`group min-h-[158px] rounded-[20px] border p-5 text-left transition duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+      className={`min-h-[158px] rounded-[20px] border p-5 text-left transition hover:-translate-y-0.5 hover:shadow-md ${
         dark
           ? 'border-[#10231c] bg-[#10231c] text-white'
           : 'border-[#dfe3dc] bg-white text-[#10231c]'
@@ -576,42 +1254,67 @@ function DashboardCard({
           {title}
         </span>
 
-        <span
-          className={
-            dark ? 'text-[#aebdb4]' : 'text-[#8b958f]'
-          }
-        >
+        <span className={dark ? 'text-[#aebdb4]' : 'text-[#8b958f]'}>
           {icon}
         </span>
       </div>
 
       <p
-        className={`mt-8 text-[29px] font-semibold tracking-[-0.04em] ${
+        className={`mt-8 text-[27px] font-semibold tracking-[-0.04em] ${
           dark ? 'text-[#d8ff3e]' : 'text-[#10231c]'
         }`}
       >
         {value}
       </p>
-
-      <div className="mt-2 flex items-center gap-1 text-[11px]">
-        {title === 'Saldo disponível' && (
-          <TrendingUp
-            size={12}
-            className={
-              dark ? 'text-[#d8ff3e]' : 'text-[#6b9d27]'
-            }
-          />
-        )}
-
-        <span
-          className={
-            dark ? 'text-[#aebdb4]' : 'text-[#7c8781]'
-          }
-        >
-          {subtitle || 'Clique para ver detalhes'}
-        </span>
-      </div>
     </button>
+  )
+}
+
+interface EmptyStateProps {
+  icon: ReactNode
+  title: string
+  description: string
+}
+
+function EmptyState({
+  icon,
+  title,
+  description,
+}: EmptyStateProps) {
+  return (
+    <div className="flex min-h-[180px] min-w-0 flex-col items-center justify-center text-center">
+      <div className="text-[#b8c0ba]">{icon}</div>
+      <p className="mt-3 text-sm font-medium text-[#68736d]">{title}</p>
+      <p className="mt-1 max-w-[230px] text-xs leading-5 text-[#9aa39e]">
+        {description}
+      </p>
+    </div>
+  )
+}
+
+interface InfoCardProps {
+  title: string
+  children: ReactNode
+  onClick: () => void
+}
+
+function InfoCard({ title, children, onClick }: InfoCardProps) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onClick()
+        }
+      }}
+      className="min-w-0 cursor-pointer rounded-[20px] border border-[#dfe3dc] bg-white p-5 transition hover:border-[#b8c4bb] hover:shadow-md sm:p-6"
+    >
+      <h2 className="text-base font-semibold">{title}</h2>
+      <div className="mt-4">{children}</div>
+    </div>
   )
 }
 
