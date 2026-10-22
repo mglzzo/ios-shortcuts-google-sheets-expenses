@@ -18,6 +18,7 @@ app.use((req, res, next) => {
     "https://ios-shortcuts-google-sheets-expense.vercel.app",
   ];
 
+  
   if (origin && allowedOrigins.includes(origin)) {
     res.header("Access-Control-Allow-Origin", origin);
   }
