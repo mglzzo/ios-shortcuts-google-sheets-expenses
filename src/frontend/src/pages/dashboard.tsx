@@ -1,6 +1,5 @@
 import {
   ChevronDown,
-  ChevronRight,
   CreditCard,
   Grid2X2,
   Link2,
@@ -295,8 +294,6 @@ function Dashboard() {
 
   const economia = entradas - saidas
 
-  const percentualEconomia =
-    entradas > 0 ? Math.round((economia / entradas) * 100) : 0
 
   const categorias = useMemo(() => {
     const mapa = new Map<string, number>()
@@ -453,10 +450,6 @@ function Dashboard() {
     return resultado
   }, [transacoes, selectedMonth])
 
-  const maiorFluxo = Math.max(
-    ...fluxo.map((item) => Math.max(item.entrada, item.saida)),
-    1,
-  )
 
   if (loading) {
     return (
