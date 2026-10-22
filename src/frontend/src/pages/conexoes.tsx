@@ -4,9 +4,9 @@ import {
   Grid2X2,
   Link2,
   LogOut,
+  Menu,
   MoreHorizontal,
-  PieChart,
-  Settings,
+
   PlugZap,
   LockKeyhole,
   X,
@@ -27,6 +27,7 @@ function Conexoes() {
 
   const [usuario, setUsuario] = useState<Usuario | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
   const [pluggyModalOpen, setPluggyModalOpen] = useState(false)
 
   useEffect(() => {
@@ -45,17 +46,39 @@ function Conexoes() {
 
   useEffect(() => {
     function fecharComEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') setPluggyModalOpen(false)
+      if (event.key === 'Escape') {
+        setPluggyModalOpen(false)
+        setMobileSidebarOpen(false)
+        setMenuOpen(false)
+      }
     }
 
     window.addEventListener('keydown', fecharComEscape)
     return () => window.removeEventListener('keydown', fecharComEscape)
   }, [])
 
+  useEffect(() => {
+    document.body.style.overflow = mobileSidebarOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [mobileSidebarOpen])
+
   const nome = usuario?.nome?.split(' ')[0] || 'usuário'
+
+  function irPara(caminho: string) {
+    setMobileSidebarOpen(false)
+    navigate(caminho)
+  }
+
+  function sair() {
+    localStorage.removeItem('token')
+    window.location.href = '/login'
+  }
 
   return (
     <div className="min-h-screen bg-[#f7f7f0] text-[#10231c]">
+      {/* Menu lateral fixo no desktop */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[232px] flex-col bg-[#10231c] text-white lg:flex">
         <div className="flex h-24 items-center px-5">
           <div className="flex items-center gap-3">
@@ -67,15 +90,11 @@ function Conexoes() {
         <div className="px-5 pt-10">
           <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#94a69d]">Seu espaço</p>
           <nav className="space-y-2">
-            <button type="button" onClick={() => navigate('/dashboard')} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-[#d5ddd8] transition hover:bg-white/5">
+            <button type="button" onClick={() => irPara('/dashboard')} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-[#d5ddd8] transition hover:bg-white/5">
               <Grid2X2 size={17} /> Visão geral
             </button>
-            <button type="button" onClick={() => navigate('/conexoes')} className="flex w-full items-center gap-3 rounded-xl bg-[#d8ff3e] px-3 py-3 text-left text-sm font-semibold text-[#10231c]">
+            <button type="button" onClick={() => irPara('/conexoes')} className="flex w-full items-center gap-3 rounded-xl bg-[#d8ff3e] px-3 py-3 text-left text-sm font-semibold text-[#10231c]">
               <Link2 size={17} /> Conexões
-            </button>
-            <button type="button" className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-[#d5ddd8] transition hover:bg-white/5">
-              <PieChart size={17} /> Análises
-              <span className="ml-auto text-[8px] uppercase text-[#81928a]">em breve</span>
             </button>
           </nav>
         </div>
@@ -84,10 +103,7 @@ function Conexoes() {
           <div className="relative">
             {menuOpen && (
               <div className="absolute bottom-[58px] -left-[8px] right-0 z-50 rounded-xl border border-white/10 bg-[#182c24] p-2 shadow-xl">
-                <button type="button" className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs text-[#d5ddd8] transition hover:bg-white/5 hover:text-white">
-                  <Settings size={15} /> Configurações
-                </button>
-                <button type="button" onClick={() => { localStorage.removeItem('token'); window.location.href = '/login' }} className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs text-[#d5ddd8] transition hover:bg-white/5 hover:text-white">
+                <button type="button" onClick={sair} className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs text-[#d5ddd8] transition hover:bg-white/5 hover:text-white">
                   <LogOut size={15} /> Sair
                 </button>
               </div>
@@ -98,7 +114,71 @@ function Conexoes() {
                 <p className="truncate text-xs font-semibold">{usuario?.nome}</p>
                 <p className="mt-0.5 text-[10px] text-[#8fa098]">Plano essencial</p>
               </div>
-              <button type="button" onClick={() => setMenuOpen((value) => !value)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 text-[#8fa098] transition hover:bg-white/5 hover:text-white" aria-label="Abrir menu do usuário">
+              <button type="button" onClick={() => setMenuOpen((value) => !value)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 text-[#8fa098] transition hover:bg-white/5 hover:text-white" aria-label="Abrir menu do usuário" aria-expanded={menuOpen}>
+                <MoreHorizontal size={17} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Fundo e menu deslizante para celular e tablet */}
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/45 lg:hidden"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setMobileSidebarOpen(false)
+          }}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        id="mobile-navigation"
+        aria-label="Menu principal"
+        className={`fixed inset-y-0 left-0 z-[70] flex w-[min(82vw,300px)] flex-col bg-[#10231c] text-white shadow-2xl transition-transform duration-200 ease-out lg:hidden ${
+          mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        aria-hidden={!mobileSidebarOpen}
+      >
+        <div className="flex h-20 items-center justify-between px-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#d8ff3e] text-[15px] font-semibold text-[#10231c]">F</div>
+            <span className="text-[15px] font-semibold">FinlyApp</span>
+          </div>
+          <button type="button" onClick={() => setMobileSidebarOpen(false)} aria-label="Fechar menu lateral" className="flex h-10 w-10 items-center justify-center rounded-xl text-[#cbd6cf] transition hover:bg-white/10 hover:text-white">
+            <X size={21} />
+          </button>
+        </div>
+
+        <div className="px-5 pt-7">
+          <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#94a69d]">Seu espaço</p>
+          <nav className="space-y-2">
+            <button type="button" onClick={() => irPara('/dashboard')} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-[#d5ddd8] transition hover:bg-white/5">
+              <Grid2X2 size={17} /> Visão geral
+            </button>
+            <button type="button" onClick={() => irPara('/conexoes')} className="flex w-full items-center gap-3 rounded-xl bg-[#d8ff3e] px-3 py-3 text-left text-sm font-semibold text-[#10231c]">
+              <Link2 size={17} /> Conexões
+            </button>
+          </nav>
+        </div>
+
+        <div className="mt-auto p-4">
+          <div className="relative">
+            {menuOpen && (
+              <div className="absolute bottom-[58px] left-0 right-0 z-50 rounded-xl border border-white/10 bg-[#182c24] p-2 shadow-xl">
+                <button type="button" onClick={sair} className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs text-[#d5ddd8] transition hover:bg-white/5 hover:text-white">
+                  <LogOut size={15} /> Sair
+                </button>
+              </div>
+            )}
+            <div className="flex items-center gap-3 rounded-xl px-2 py-2">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f0bd62] text-xs font-semibold text-[#10231c]">{nome.slice(0, 2).toUpperCase()}</div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-semibold">{usuario?.nome}</p>
+                <p className="mt-0.5 text-[10px] text-[#8fa098]">Plano essencial</p>
+              </div>
+              <button type="button" onClick={() => setMenuOpen((value) => !value)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 text-[#8fa098] transition hover:bg-white/5 hover:text-white" aria-label="Abrir menu do usuário" aria-expanded={menuOpen}>
                 <MoreHorizontal size={17} />
               </button>
             </div>
@@ -107,12 +187,20 @@ function Conexoes() {
       </aside>
 
       <main className="min-h-screen lg:ml-[232px]">
-        <header className="flex items-center px-5 py-5 sm:px-8 lg:px-11 lg:py-8">
-          <div className="lg:hidden">
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#d8ff3e] text-[14px] font-semibold tracking-[-0.04em] text-[#10231c]">F</div>
-              <span className="text-sm font-semibold">FinlyApp</span>
-            </div>
+        <header className="flex items-center gap-3 px-5 py-5 sm:px-8 lg:px-11 lg:py-8">
+          <button
+            type="button"
+            onClick={() => setMobileSidebarOpen(true)}
+            aria-label="Abrir menu lateral"
+            aria-controls="mobile-navigation"
+            aria-expanded={mobileSidebarOpen}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#dfe3dc] bg-white text-[#10231c] shadow-sm transition hover:bg-[#f0f2eb] focus:outline-none focus:ring-4 focus:ring-[#10231c]/10 lg:hidden"
+          >
+            <Menu size={20} />
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#d8ff3e] text-[14px] font-semibold tracking-[-0.04em] text-[#10231c]">F</div>
+            <span className="text-sm font-semibold">FinlyApp</span>
           </div>
         </header>
 
@@ -123,7 +211,7 @@ function Conexoes() {
             <p className="mt-2 max-w-xl text-sm leading-6 text-[#68736d]">Escolha como suas movimentações serão conectadas ao FinlyApp.</p>
           </div>
 
-          <section className="grid gap-4 md:grid-cols-2">
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <button type="button" onClick={() => setPluggyModalOpen(true)} className="relative rounded-[20px] border border-[#dfe3dc] bg-white p-6 text-left transition hover:-translate-y-0.5 hover:border-[#cbd1c9] hover:shadow-[0_16px_40px_rgba(16,35,28,0.06)] focus:outline-none focus:ring-4 focus:ring-[#10231c]/5">
               <div className="mb-7 flex items-start justify-between">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#eef0eb] text-[#68736d]"><PlugZap size={21} /></div>
@@ -134,21 +222,45 @@ function Conexoes() {
               <div className="mt-6 flex items-center gap-1 text-xs font-medium text-[#526159]">Saiba mais <ChevronRight size={14} /></div>
             </button>
 
-            <button type="button" onClick={() => navigate('/conexoes/planilha')} className="group rounded-[20px] border border-[#dfe3dc] bg-white p-6 text-left transition hover:-translate-y-0.5 hover:border-[#cbd1c9] hover:shadow-[0_16px_40px_rgba(16,35,28,0.06)]">
+            <button
+              type="button"
+              onClick={() => {
+                sessionStorage.setItem('finly-tipo-importacao-planilha', 'saida')
+                navigate('/conexoes/planilha')
+              }}
+              className="group rounded-[20px] border border-[#dfe3dc] bg-white p-6 text-left transition hover:-translate-y-0.5 hover:border-[#cbd1c9] hover:shadow-[0_16px_40px_rgba(16,35,28,0.06)]"
+            >
               <div className="mb-7 flex items-start justify-between">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#d8ff3e] text-[#10231c]"><FileSpreadsheet size={21} /></div>
                 <ChevronRight size={19} className="text-[#8a958f] transition group-hover:translate-x-1 group-hover:text-[#10231c]" />
               </div>
-              <h2 className="text-lg font-semibold tracking-[-0.02em]">Planilha</h2>
-              <p className="mt-2 text-sm leading-6 text-[#68736d]">Importe seus gastos a partir de uma planilha e informe onde cada informação está localizada.</p>
-              <div className="mt-6 text-xs font-medium text-[#526159]">Configurar planilha</div>
+              <h2 className="text-lg font-semibold tracking-[-0.02em]">Planilha de saídas</h2>
+              <p className="mt-2 text-sm leading-6 text-[#68736d]">Importe despesas e registre todos os valores como negativos.</p>
+              <div className="mt-6 text-xs font-medium text-[#526159]">Configurar planilha de saídas</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                sessionStorage.setItem('finly-tipo-importacao-planilha', 'entrada')
+                navigate('/conexoes/planilha')
+              }}
+              className="group rounded-[20px] border border-[#dfe3dc] bg-white p-6 text-left transition hover:-translate-y-0.5 hover:border-[#cbd1c9] hover:shadow-[0_16px_40px_rgba(16,35,28,0.06)]"
+            >
+              <div className="mb-7 flex items-start justify-between">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#eef7d2] text-[#10231c]"><FileSpreadsheet size={21} /></div>
+                <ChevronRight size={19} className="text-[#8a958f] transition group-hover:translate-x-1 group-hover:text-[#10231c]" />
+              </div>
+              <h2 className="text-lg font-semibold tracking-[-0.02em]">Planilha de entradas</h2>
+              <p className="mt-2 text-sm leading-6 text-[#68736d]">Importe recebimentos preservando o sinal original dos valores.</p>
+              <div className="mt-6 text-xs font-medium text-[#526159]">Configurar planilha de entradas</div>
             </button>
           </section>
         </div>
       </main>
 
       {pluggyModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#10231c]/45 p-4 backdrop-blur-[2px]" onMouseDown={(event) => { if (event.target === event.currentTarget) setPluggyModalOpen(false) }}>
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#10231c]/45 p-4 backdrop-blur-[2px]" onMouseDown={(event) => { if (event.target === event.currentTarget) setPluggyModalOpen(false) }}>
           <section role="dialog" aria-modal="true" aria-labelledby="pluggy-modal-title" className="w-full max-w-md rounded-[24px] border border-[#dfe3dc] bg-white p-6 shadow-2xl sm:p-7">
             <div className="flex items-start justify-between gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#eef7d2] text-[#10231c]"><Construction size={22} /></div>

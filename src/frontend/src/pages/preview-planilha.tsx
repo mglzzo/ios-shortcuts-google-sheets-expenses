@@ -231,6 +231,17 @@ function PreviewPlanilha() {
             )
 
             const valorConvertido = converterValor(valorOriginal)
+            const tipoImportacao = sessionStorage.getItem(
+              'finly-tipo-importacao-planilha',
+            )
+
+            // Saídas sempre são negativas; entradas preservam o sinal original.
+            const valorFinal =
+              valorConvertido === null
+                ? null
+                : tipoImportacao === 'entrada'
+                  ? valorConvertido
+                  : -Math.abs(valorConvertido)
 
             return {
               data: formatarData(
@@ -239,10 +250,7 @@ function PreviewPlanilha() {
               estabelecimento: String(
                 obterValor(linha, mapeamento.estabelecimento),
               ),
-              valor:
-                valorConvertido === null
-                  ? ''
-                  : String(valorConvertido),
+              valor: valorFinal === null ? '' : String(valorFinal),
               metodoPagamento,
               categoria: String(categoria),
               subcategoria: String(
@@ -305,7 +313,16 @@ function PreviewPlanilha() {
   }
 
   function continuar() {
-    navigate('/conexoes/planilha/confirmar', {
+    const tipoImportacao = sessionStorage.getItem(
+      'finly-tipo-importacao-planilha',
+    )
+
+    const rota =
+      tipoImportacao === 'entrada'
+        ? '/conexoes/planilha/confirmar-entradas'
+        : '/conexoes/planilha/confirmar'
+
+    navigate(rota, {
       state: {
         arquivo: arquivoState,
         configuracao,

@@ -4,10 +4,11 @@ import {
   Grid2X2,
   Link2,
   LogOut,
+  Menu,
   MoreHorizontal,
   PieChart,
   Receipt,
-  Settings,
+
   ShoppingBag,
   TrendingDown,
   TrendingUp,
@@ -105,6 +106,7 @@ function Dashboard() {
     try { return JSON.parse(valor) as ImportNotification } catch { return null }
   })
   const [menuOpen, setMenuOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [monthMenuOpen, setMonthMenuOpen] = useState(false)
   const [selectedCard, setSelectedCard] = useState<string | null>(null)
   const [selectedMonth, setSelectedMonth] = useState(
@@ -224,6 +226,15 @@ function Dashboard() {
       ativo = false
     }
   }, [location.key])
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+    const fecharComEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileMenuOpen(false)
+    }
+    window.addEventListener('keydown', fecharComEsc)
+    return () => window.removeEventListener('keydown', fecharComEsc)
+  }, [mobileMenuOpen])
 
   useEffect(() => {
     if (!importNotification) return
@@ -475,7 +486,7 @@ function Dashboard() {
   }
 
   return (
-    <div className="fixed inset-0 h-screen w-screen overflow-hidden bg-[#f7f7f0] text-[#10231c]">
+    <div className="min-h-screen w-full overflow-x-hidden bg-[#f7f7f0] text-[#10231c]">
       {importNotification && (
         <div
           role="status"
@@ -495,7 +506,7 @@ function Dashboard() {
           <button type="button" aria-label="Fechar notificação" onClick={() => setImportNotification(null)} className="ml-1 text-lg leading-4 text-[#68736d] hover:text-[#10231c]">×</button>
         </div>
       )}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[232px] flex-col bg-[#10231c] text-white lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[232px] flex-col bg-[#10231c] text-white xl:flex">
         <div className="flex h-24 items-center px-5">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#d8ff3e] text-[15px] font-semibold text-[#10231c]">
@@ -528,13 +539,7 @@ function Dashboard() {
               Conexões
             </button>
 
-            <button
-              type="button"
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-[#d5ddd8] transition hover:bg-white/5"
-            >
-              <PieChart size={17} />
-              Análises
-            </button>
+           
           </nav>
         </div>
 
@@ -542,13 +547,6 @@ function Dashboard() {
           <div className="relative">
             {menuOpen && (
               <div className="absolute bottom-[58px] -left-[8px] right-0 z-50 rounded-xl border border-white/10 bg-[#182c24] p-2 shadow-xl">
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs text-[#d5ddd8]"
-                >
-                  <Settings size={15} />
-                  Configurações
-                </button>
 
                 <button
                   type="button"
@@ -587,9 +585,41 @@ function Dashboard() {
         </div>
       </aside>
 
-      <main className="h-screen overflow-hidden lg:ml-[232px]">
-        <header className="px-5 py-5 sm:px-8 lg:px-11 lg:py-8">
-          <div className="lg:hidden">
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[60] xl:hidden" role="presentation">
+          <button type="button" aria-label="Fechar menu" className="absolute inset-0 h-full w-full bg-black/40" onClick={() => setMobileMenuOpen(false)} />
+          <aside id="mobile-navigation" className="absolute inset-y-0 left-0 flex w-[min(82vw,280px)] flex-col bg-[#10231c] text-white shadow-2xl" aria-label="Menu principal">
+            <div className="flex h-20 items-center justify-between px-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#d8ff3e] text-[15px] font-semibold text-[#10231c]">F</div>
+                <span className="text-[15px] font-semibold">FinlyApp</span>
+              </div>
+              <button type="button" aria-label="Fechar menu" onClick={() => setMobileMenuOpen(false)} className="flex h-9 w-9 items-center justify-center rounded-xl text-[#d5ddd8] hover:bg-white/10"><X size={19} /></button>
+            </div>
+            <div className="px-4 pt-6">
+              <p className="mb-4 px-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#94a69d]">Seu espaço</p>
+              <nav className="space-y-2">
+                <button type="button" onClick={() => setMobileMenuOpen(false)} className="flex w-full items-center gap-3 rounded-xl bg-[#d8ff3e] px-3 py-3 text-left text-sm font-semibold text-[#10231c]"><Grid2X2 size={17} />Visão geral</button>
+                <button type="button" onClick={() => { setMobileMenuOpen(false); navigate('/conexoes') }} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm text-[#d5ddd8] transition hover:bg-white/5"><Link2 size={17} />Conexões</button>
+              </nav>
+            </div>
+            <div className="mt-auto border-t border-white/10 p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f0bd62] text-xs font-semibold text-[#10231c]">{nome.slice(0, 2).toUpperCase()}</div>
+                <div className="min-w-0"><p className="truncate text-sm font-semibold">{usuario?.nome}</p><p className="truncate text-xs text-[#94a69d]">{usuario?.email}</p></div>
+              </div>
+              <button type="button" onClick={() => { localStorage.removeItem('token'); window.location.href = '/login' }} className="mt-4 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-[#d5ddd8] hover:bg-white/5"><LogOut size={16} />Sair</button>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      <main className="min-h-screen min-w-0 overflow-y-auto xl:ml-[232px]">
+        <header className="px-4 py-4 sm:px-8 lg:px-11 lg:py-8">
+          <div className="flex items-center justify-start gap-3 xl:hidden">
+            <button type="button" aria-label="Abrir menu lateral" aria-controls="mobile-navigation" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(true)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#dfe3dc] bg-white text-[#10231c] shadow-sm transition hover:bg-[#f1f4ed] focus:outline-none focus:ring-4 focus:ring-[#10231c]/10">
+              <Menu size={21} />
+            </button>
             <div className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#d8ff3e] text-[14px] font-semibold text-[#10231c]">
                 F
@@ -599,8 +629,8 @@ function Dashboard() {
           </div>
         </header>
 
-        <div className="mx-auto max-w-[1200px] px-5 pb-3 sm:px-8 lg:px-11">
-          <section className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mx-auto max-w-[1440px] px-4 pb-8 sm:px-8 lg:px-11">
+          <section className="mb-4 flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7d8983]">
                 {new Date().toLocaleDateString('pt-BR', {
@@ -611,7 +641,7 @@ function Dashboard() {
                 })}
               </p>
 
-              <h1 className="mt-2 text-[34px] font-normal tracking-[-0.04em] sm:text-[42px]">
+              <h1 className="mt-2 break-words text-[30px] font-normal tracking-[-0.04em] sm:text-[42px]">
                 Bom dia, {nome}.
               </h1>
             </div>
@@ -622,7 +652,7 @@ function Dashboard() {
                 aria-label="Selecionar mês"
                 aria-expanded={monthMenuOpen}
                 onClick={() => setMonthMenuOpen((open) => !open)}
-                className="flex min-w-[190px] items-center justify-between gap-4 rounded-2xl border border-[#dfe3dc] bg-white px-4 py-3.5 text-sm font-semibold capitalize text-[#10231c] shadow-sm transition hover:border-[#b8c4bb] hover:shadow-md focus:outline-none focus:ring-4 focus:ring-[#10231c]/5"
+                className="flex w-full min-w-0 items-center justify-between gap-4 rounded-2xl sm:w-auto sm:min-w-[190px] border border-[#dfe3dc] bg-white px-4 py-3.5 text-sm font-semibold capitalize text-[#10231c] shadow-sm transition hover:border-[#b8c4bb] hover:shadow-md focus:outline-none focus:ring-4 focus:ring-[#10231c]/5"
               >
                 {getMonthLabel(selectedMonth)}
                 <ChevronDown
@@ -657,7 +687,7 @@ function Dashboard() {
             </div>
           </section>
 
-          <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <section className="grid min-w-0 grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-4">
             <DashboardCard
               title="Gastos com cartão"
               value={formatCurrency(gastosCartao)}
@@ -688,7 +718,7 @@ function Dashboard() {
             />
           </section>
 
-          <section className="mt-3 grid gap-3 xl:grid-cols-[1.7fr_1fr]">
+          <section className="mt-3 grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
             <div className="min-w-0 rounded-[20px] border border-[#dfe3dc] bg-white p-5 sm:p-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-semibold">Fluxo financeiro</h2>
@@ -771,7 +801,7 @@ function Dashboard() {
                       <div className="w-full overflow-hidden">
                         <svg
                           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-                          className="h-[245px] w-full"
+                          className="h-[210px] w-full sm:h-[245px]"
                           preserveAspectRatio="none"
                         >
                           {ticks.map((tick) => (
@@ -1055,7 +1085,7 @@ function Dashboard() {
             </div>
           </section>
 
-          <section className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-[minmax(210px,0.85fr)_minmax(300px,1.6fr)_minmax(360px,1.7fr)]">
+          <section className="mt-3 grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-[minmax(210px,0.85fr)_minmax(300px,1.6fr)_minmax(360px,1.7fr)]">
             <InfoCard title="Contas próximas" onClick={() => setSelectedCard('contas')}>
               {parcelasProximas.length === 0 ? (
                 <EmptyState
@@ -1193,11 +1223,11 @@ function Dashboard() {
 
       {selectedCard && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-[2px]"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/30 p-3 backdrop-blur-[2px] sm:p-4"
           onClick={() => setSelectedCard(null)}
         >
           <div
-            className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-[24px] bg-white p-5 shadow-2xl sm:p-6"
+            className="flex max-h-[90dvh] w-full max-w-2xl flex-col rounded-[24px] bg-white p-4 shadow-2xl sm:max-h-[85vh] sm:p-6"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between gap-4">
@@ -1302,7 +1332,7 @@ function DashboardCard({
     <button
       type="button"
       onClick={onClick}
-      className={`min-h-[158px] rounded-[20px] border p-5 text-left transition hover:-translate-y-0.5 hover:shadow-md ${
+      className={`min-h-[128px] min-w-0 rounded-[20px] border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md sm:min-h-[145px] sm:p-5 ${
         dark
           ? 'border-[#10231c] bg-[#10231c] text-white'
           : 'border-[#dfe3dc] bg-white text-[#10231c]'
@@ -1323,7 +1353,7 @@ function DashboardCard({
       </div>
 
       <p
-        className={`mt-8 text-[27px] font-semibold tracking-[-0.04em] ${
+        className={`mt-6 break-words text-[21px] font-semibold tracking-[-0.04em] sm:mt-8 sm:text-[27px] ${
           dark ? 'text-[#d8ff3e]' : 'text-[#10231c]'
         }`}
       >

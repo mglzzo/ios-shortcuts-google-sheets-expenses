@@ -15,17 +15,19 @@ function Planilha() {
   const [arrastando, setArrastando] = useState(false)
   const [erro, setErro] = useState('')
 
+  const tipoImportacao =
+    sessionStorage.getItem('finly-tipo-importacao-planilha') === 'entrada'
+      ? 'entrada'
+      : 'saida'
+
+  const textoTipo = tipoImportacao === 'entrada' ? 'entradas' : 'saídas'
+
   function selecionarArquivo(file: File | undefined) {
     if (!file) {
       return
     }
 
-    const extensoesPermitidas = [
-      '.xlsx',
-      '.xls',
-      '.csv',
-    ]
-
+    const extensoesPermitidas = ['.xlsx', '.xls', '.csv']
     const extensao = `.${file.name.split('.').pop()?.toLowerCase()}`
 
     if (!extensoesPermitidas.includes(extensao)) {
@@ -48,12 +50,20 @@ function Planilha() {
       return
     }
 
+    // Releitura no clique para garantir que usamos a opção escolhida em Conexões.
+    const tipoAtual =
+      sessionStorage.getItem('finly-tipo-importacao-planilha') === 'entrada'
+        ? 'entrada'
+        : 'saida'
+
     navigate('/conexoes/planilha/preparar', {
       state: {
         arquivo,
+        tipoImportacao: tipoAtual,
       },
     })
   }
+
   return (
     <div className="min-h-screen bg-[#f7f7f0] text-[#10231c]">
       <main className="mx-auto max-w-[1000px] px-5 py-6 sm:px-8 lg:px-11 lg:py-9">
@@ -67,14 +77,12 @@ function Planilha() {
         </button>
 
         <div className="max-w-2xl">
-          
-
           <h1 className="mt-2 text-[34px] font-normal tracking-[-0.04em] text-[#10231c] sm:text-[42px]">
-            Conecte sua planilha
+            Conecte sua planilha de {textoTipo}
           </h1>
 
           <p className="mt-3 text-sm leading-6 text-[#68736d]">
-            Envie sua planilha de gastos. Depois, vamos pedir algumas
+            Envie sua planilha de {tipoImportacao === 'entrada' ? 'recebimentos' : 'gastos'}. Depois, vamos pedir algumas
             informações para entender exatamente onde cada dado está.
           </p>
         </div>
@@ -92,27 +100,24 @@ function Planilha() {
                 setArrastando(false)
                 selecionarArquivo(event.dataTransfer.files[0])
               }}
-              className={`flex min-h-[300px] cursor-pointer flex-col items-center justify-center rounded-[18px] border border-dashed px-6 text-center transition ${arrastando
+              className={`flex min-h-[300px] cursor-pointer flex-col items-center justify-center rounded-[18px] border border-dashed px-6 text-center transition ${
+                arrastando
                   ? 'border-[#9dbb24] bg-[#f5fbdc]'
                   : 'border-[#cfd5cd] bg-[#fafaf6] hover:border-[#aeb8ae] hover:bg-[#f7f8f2]'
-                }`}
+              }`}
             >
               <input
                 type="file"
                 accept=".xlsx,.xls,.csv"
                 className="hidden"
-                onChange={(event) =>
-                  selecionarArquivo(event.target.files?.[0])
-                }
+                onChange={(event) => selecionarArquivo(event.target.files?.[0])}
               />
 
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#d8ff3e] text-[#10231c]">
                 <FileSpreadsheet size={25} />
               </div>
 
-              <h2 className="mt-5 text-base font-semibold">
-                Arraste sua planilha aqui
-              </h2>
+              <h2 className="mt-5 text-base font-semibold">Arraste sua planilha aqui</h2>
 
               <p className="mt-2 text-sm text-[#7b857f]">
                 ou clique para selecionar um arquivo
@@ -130,10 +135,7 @@ function Planilha() {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">
-                    {arquivo.name}
-                  </p>
-
+                  <p className="truncate text-sm font-semibold">{arquivo.name}</p>
                   <p className="mt-1 text-xs text-[#8a958f]">
                     {(arquivo.size / 1024 / 1024).toFixed(2)} MB
                   </p>
@@ -156,11 +158,7 @@ function Planilha() {
             </div>
           )}
 
-          {erro && (
-            <p className="mt-4 text-sm text-[#b75b4a]">
-              {erro}
-            </p>
-          )}
+          {erro && <p className="mt-4 text-sm text-[#b75b4a]">{erro}</p>}
 
           <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button

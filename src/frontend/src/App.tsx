@@ -8,6 +8,7 @@ import ConfigurarPlanilha from './pages/configurar-planilha'
 import PrepararPlanilha from './pages/preparar-planilha'
 import PreviewPlanilha from './pages/preview-planilha'
 import ConfirmarPlanilha from './pages/confirmar-planilha'
+import ConfirmarPlanilhaEntradas from './pages/confirmar-planilha-entradas'
 
 function App() {
   return (
@@ -33,6 +34,10 @@ function App() {
         <Route
           path="/conexoes/planilha/confirmar"
           element={<ConfirmarPlanilha />}
+        />
+        <Route
+          path="/conexoes/planilha/confirmar-entradas"
+          element={<ConfirmarPlanilhaEntradas />}
         />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
