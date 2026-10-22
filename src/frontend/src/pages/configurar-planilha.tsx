@@ -705,17 +705,14 @@ function ConfigurarPlanilha() {
                           setConfiguracaoPagamento(null)
                           setSelecionando(true)
                         }}
-                        className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition ${
-                          configuracaoPagamento?.tipo === 'coluna'
-                            ? 'border-[#8a8063] bg-white font-semibold text-[#10231c]'
-                            : 'border-[#dfe3dc] bg-white text-[#526159] hover:border-[#bdb69b]'
-                        }`}
+                        className="flex w-full cursor-pointer items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-semibold text-white transition-colors duration-200 hover:border-[#756b52] hover:bg-[#756b52] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a8063] focus-visible:ring-offset-2"
+                        style={{
+                          borderColor: '#8a8063',
+                          backgroundColor: '#8a8063',
+                        }}
                       >
                         <span>Usar uma coluna da planilha</span>
-
-                        {configuracaoPagamento?.tipo === 'coluna' && (
-                          <Check size={16} />
-                        )}
+                        <ChevronRight size={16} />
                       </button>
 
                       <button
@@ -734,9 +731,35 @@ function ConfigurarPlanilha() {
                         }}
                         className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition ${
                           configuracaoPagamento?.tipo === 'fixo'
-                            ? 'border-[#8a8063] bg-white font-semibold text-[#10231c]'
-                            : 'border-[#dfe3dc] bg-white text-[#526159] hover:border-[#bdb69b]'
+                            ? 'font-semibold text-[#10231c]'
+                            : 'bg-white text-[#526159]'
                         }`}
+                        style={{
+                          borderColor:
+                            configuracaoPagamento?.tipo === 'fixo'
+                              ? '#8a8063'
+                              : '#d8cfb3',
+                          backgroundColor:
+                            configuracaoPagamento?.tipo === 'fixo'
+                              ? '#8a8063'
+                              : '#ffffff',
+                          color:
+                            configuracaoPagamento?.tipo === 'fixo'
+                              ? '#ffffff'
+                              : '#526159',
+                        }}
+                        onMouseEnter={(event) => {
+                          if (configuracaoPagamento?.tipo !== 'fixo') {
+                            event.currentTarget.style.borderColor = '#8a8063'
+                            event.currentTarget.style.backgroundColor = '#f3f0e5'
+                          }
+                        }}
+                        onMouseLeave={(event) => {
+                          if (configuracaoPagamento?.tipo !== 'fixo') {
+                            event.currentTarget.style.borderColor = '#d8cfb3'
+                            event.currentTarget.style.backgroundColor = '#ffffff'
+                          }
+                        }}
                       >
                         <span>Usar um método para todas</span>
 
@@ -763,9 +786,25 @@ function ConfigurarPlanilha() {
                               }
                               className={`rounded-xl border px-3 py-3 text-xs font-medium transition ${
                                 selecionado
-                                  ? 'border-[#8a8063] bg-[#8a8063] text-white'
-                                  : 'border-[#dfe3dc] bg-white text-[#526159] hover:border-[#bdb69b] hover:bg-[#faf9f4]'
+                                  ? 'text-[#10231c]'
+                                  : 'text-[#526159]'
                               }`}
+                              style={{
+                                borderColor: selecionado ? '#9aae35' : '#cfdc8a',
+                                backgroundColor: selecionado ? '#d8ff3e' : '#f8faed',
+                              }}
+                              onMouseEnter={(event) => {
+                                if (!selecionado) {
+                                  event.currentTarget.style.borderColor = '#9aae35'
+                                  event.currentTarget.style.backgroundColor = '#eaf4c5'
+                                }
+                              }}
+                              onMouseLeave={(event) => {
+                                if (!selecionado) {
+                                  event.currentTarget.style.borderColor = '#cfdc8a'
+                                  event.currentTarget.style.backgroundColor = '#f8faed'
+                                }
+                              }}
                             >
                               {metodo.titulo}
                             </button>

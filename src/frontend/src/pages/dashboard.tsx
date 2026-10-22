@@ -16,13 +16,13 @@ import {
   X,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { getMe } from '../services/auth'
 import {
   getTransactions,
   type Transaction,
-} from '../services/transactions'
+} from '../services/transicoes'
 
 interface Usuario {
   id: string
@@ -41,6 +41,12 @@ let dashboardRequest: Promise<{
   usuario: Usuario
   transacoes: Transaction[]
 }> | null = null
+
+// Limpa os dados em memória para que o dashboard consulte novamente a API.
+export function invalidarDashboardCache() {
+  dashboardCache = null
+  dashboardRequest = null
+}
 
 function formatCurrency(value: number) {
   return value.toLocaleString('pt-BR', {
@@ -75,12 +81,16 @@ function getValue(value: string | number) {
   return Number.isFinite(number) ? number : 0
 }
 
+type ImportNotification = { tipo: 'success' | 'warning' | 'error'; mensagem: string }
+
 function Dashboard() {
   const navigate = useNavigate()
+  const location = useLocation()
 
   const tokenAtual = localStorage.getItem('token') || ''
+  const precisaAtualizar = sessionStorage.getItem('finly-refresh-dashboard') === 'true'
   const cacheInicial =
-    dashboardCache?.token === tokenAtual ? dashboardCache : null
+    !precisaAtualizar && dashboardCache?.token === tokenAtual ? dashboardCache : null
 
   const [usuario, setUsuario] = useState<Usuario | null>(
     cacheInicial?.usuario ?? null,
@@ -90,6 +100,11 @@ function Dashboard() {
   )
   const [loading, setLoading] = useState(!cacheInicial)
   const [error, setError] = useState('')
+  const [importNotification, setImportNotification] = useState<ImportNotification | null>(() => {
+    const valor = sessionStorage.getItem('finly-import-notification')
+    if (!valor) return null
+    try { return JSON.parse(valor) as ImportNotification } catch { return null }
+  })
   const [menuOpen, setMenuOpen] = useState(false)
   const [monthMenuOpen, setMonthMenuOpen] = useState(false)
   const [selectedCard, setSelectedCard] = useState<string | null>(null)
@@ -100,6 +115,13 @@ function Dashboard() {
   useEffect(() => {
     let ativo = true
     const token = localStorage.getItem('token') || ''
+    const precisaAtualizar = sessionStorage.getItem('finly-refresh-dashboard') === 'true'
+    sessionStorage.removeItem('finly-refresh-dashboard')
+    sessionStorage.removeItem('finly-import-notification')
+    if (precisaAtualizar) {
+      invalidarDashboardCache()
+      setLoading(true)
+    }
 
     if (!token) {
       setLoading(false)
@@ -122,21 +144,24 @@ function Dashboard() {
       try {
         setError('')
 
+        if (precisaAtualizar) {
+          // Não reutilize uma requisição iniciada antes da importação.
+          dashboardRequest = null
+        }
+
         if (!dashboardRequest) {
           dashboardRequest = (async () => {
             const dadosUsuario = await getMe()
             const primeiraPagina = await getTransactions(1, 50)
             const dados = [...(primeiraPagina.data ?? [])]
             let pagina = primeiraPagina.page
+            let temMais = primeiraPagina.hasMore
 
-            while (primeiraPagina.hasMore) {
+            while (temMais) {
               pagina += 1
               const proximaPagina = await getTransactions(pagina, 50)
               dados.push(...(proximaPagina.data ?? []))
-
-              if (!proximaPagina.hasMore) {
-                break
-              }
+              temMais = proximaPagina.hasMore
             }
 
             return {
@@ -156,6 +181,26 @@ function Dashboard() {
         if (ativo) {
           setUsuario(resultado.usuario)
           setTransacoes(resultado.transacoes)
+
+          // Depois de uma importação, selecione o mês mais recente com
+          // transações para que os indicadores mostrem os dados recém-importados,
+          // inclusive quando a planilha contém datas anteriores ao mês atual.
+          if (resultado.transacoes.length > 0) {
+            const existeNoMesSelecionado = resultado.transacoes.some(
+              (transacao) => getMonthKey(transacao.data) === selectedMonth,
+            )
+
+            if (precisaAtualizar || !existeNoMesSelecionado) {
+              const datasValidas = resultado.transacoes
+                .map((transacao) => transacao.data)
+                .filter((data) => /^\d{4}-\d{2}-\d{2}/.test(data))
+                .sort((a, b) => b.localeCompare(a))
+
+              if (datasValidas.length > 0) {
+                setSelectedMonth(getMonthKey(datasValidas[0]))
+              }
+            }
+          }
         }
       } catch (err) {
         if (ativo) {
@@ -179,7 +224,13 @@ function Dashboard() {
     return () => {
       ativo = false
     }
-  }, [])
+  }, [location.key])
+
+  useEffect(() => {
+    if (!importNotification) return
+    const timer = window.setTimeout(() => setImportNotification(null), 6000)
+    return () => window.clearTimeout(timer)
+  }, [importNotification])
 
   const nome = usuario?.nome?.split(' ')[0] || 'usuário'
 
@@ -432,6 +483,25 @@ function Dashboard() {
 
   return (
     <div className="fixed inset-0 h-screen w-screen overflow-hidden bg-[#f7f7f0] text-[#10231c]">
+      {importNotification && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`fixed right-5 top-5 z-[100] flex max-w-[min(92vw,420px)] items-start gap-3 rounded-2xl border p-4 shadow-xl ${
+            importNotification.tipo === 'success'
+              ? 'border-green-200 bg-white text-[#10231c]'
+              : importNotification.tipo === 'warning'
+                ? 'border-amber-200 bg-white text-[#10231c]'
+                : 'border-red-200 bg-white text-[#10231c]'
+          }`}
+        >
+          <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${
+            importNotification.tipo === 'success' ? 'bg-green-500' : importNotification.tipo === 'warning' ? 'bg-amber-500' : 'bg-red-500'
+          }`} />
+          <p className="flex-1 text-sm leading-5">{importNotification.mensagem}</p>
+          <button type="button" aria-label="Fechar notificação" onClick={() => setImportNotification(null)} className="ml-1 text-lg leading-4 text-[#68736d] hover:text-[#10231c]">×</button>
+        </div>
+      )}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[232px] flex-col bg-[#10231c] text-white lg:flex">
         <div className="flex h-24 items-center px-5">
           <div className="flex items-center gap-3">

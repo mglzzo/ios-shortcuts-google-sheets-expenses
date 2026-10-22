@@ -2,7 +2,6 @@ import {
   ArrowLeft,
   CheckCircle2,
   FileSpreadsheet,
-  Upload,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -32,23 +31,6 @@ interface LinhaPreview {
   observacao: string
 }
 
-const categorias = [
-  { id: 1, nome: 'Mercado' },
-  { id: 2, nome: 'Lazer' },
-  { id: 3, nome: 'Transporte' },
-  { id: 4, nome: 'Saúde' },
-  { id: 5, nome: 'Educação' },
-  { id: 6, nome: 'Vestuário' },
-  { id: 7, nome: 'Eletrônicos' },
-  { id: 8, nome: 'Contas/Utilidades' },
-  { id: 9, nome: 'Moradia' },
-  { id: 10, nome: 'Assinaturas' },
-  { id: 11, nome: 'Outros' },
-  { id: 23, nome: 'Transferências' },
-  { id: 24, nome: 'Empréstimos' },
-  { id: 25, nome: 'Investimentos' },
-]
-
 function formatarData(valor: unknown) {
   if (valor === null || valor === undefined || valor === '') {
     return ''
@@ -72,44 +54,57 @@ function formatarData(valor: unknown) {
   return texto
 }
 
-function formatarValor(valor: unknown) {
+function converterValor(valor: unknown): number | null {
   if (valor === null || valor === undefined || valor === '') {
-    return ''
+    return null
   }
 
-  const texto = String(valor).trim()
-
-  const normalizado = texto
-    .replace(/\./g, '')
-    .replace(',', '.')
-
-  const numero = Number(normalizado)
-
-  if (!Number.isNaN(numero)) {
-    return numero.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    })
+  if (typeof valor === 'number') {
+    return Number.isFinite(valor) ? valor : null
   }
 
-  return texto
+  let texto = String(valor).trim().replace(/[R$\s]/g, '')
+
+  if (!texto) {
+    return null
+  }
+
+  const ultimaVirgula = texto.lastIndexOf(',')
+  const ultimoPonto = texto.lastIndexOf('.')
+
+  if (ultimaVirgula > ultimoPonto) {
+    texto = texto.replace(/\./g, '').replace(',', '.')
+  } else if (ultimoPonto > ultimaVirgula) {
+    texto = texto.replace(/,/g, '')
+  }
+
+  const numero = Number(texto)
+
+  return Number.isFinite(numero) ? numero : null
 }
 
-function obterValor(
-  linha: unknown[],
-  letra: string | undefined,
-) {
+function formatarValor(valor: unknown) {
+  const numero = converterValor(valor)
+
+  if (numero === null) {
+    return valor === null || valor === undefined ? '' : String(valor)
+  }
+
+  return numero.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  })
+}
+
+function obterValor(linha: unknown[], letra: string | undefined) {
   if (!letra) {
     return ''
   }
 
   let valor = 0
 
-  for (const caractere of letra) {
-    valor =
-      valor * 26 +
-      caractere.charCodeAt(0) -
-      64
+  for (const caractere of letra.toUpperCase()) {
+    valor = valor * 26 + caractere.charCodeAt(0) - 64
   }
 
   const indice = valor - 1
@@ -121,9 +116,7 @@ function PreviewPlanilha() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const arquivoState = location.state?.arquivo as
-    | File
-    | undefined
+  const arquivoState = location.state?.arquivo as File | undefined
 
   const configuracao = location.state?.configuracao as
     | Configuracao
@@ -154,11 +147,10 @@ function PreviewPlanilha() {
         setCarregando(true)
         setErro('')
 
-        const extensao =
-          arquivoSelecionado.name
-            .split('.')
-            .pop()
-            ?.toLowerCase()
+        const extensao = arquivoSelecionado.name
+          .split('.')
+          .pop()
+          ?.toLowerCase()
 
         let workbook: XLSX.WorkBook
 
@@ -171,8 +163,7 @@ function PreviewPlanilha() {
             raw: true,
           })
         } else {
-          const buffer =
-            await arquivoSelecionado.arrayBuffer()
+          const buffer = await arquivoSelecionado.arrayBuffer()
 
           workbook = XLSX.read(buffer, {
             type: 'array',
@@ -183,22 +174,19 @@ function PreviewPlanilha() {
         const primeiraAba = workbook.SheetNames[0]
 
         if (!primeiraAba) {
-          throw new Error(
-            'A planilha não possui nenhuma aba.',
-          )
+          throw new Error('A planilha não possui nenhuma aba.')
         }
 
         const worksheet = workbook.Sheets[primeiraAba]
 
-        const dados =
-          XLSX.utils.sheet_to_json<unknown[]>(
-            worksheet,
-            {
-              header: 1,
-              defval: '',
-              raw: true,
-            },
-          )
+        const dados = XLSX.utils.sheet_to_json<unknown[]>(
+          worksheet,
+          {
+            header: 1,
+            defval: '',
+            raw: true,
+          },
+        )
 
         if (dados.length < 2) {
           throw new Error(
@@ -208,87 +196,69 @@ function PreviewPlanilha() {
 
         const dadosSemCabecalho = dados.slice(1)
 
-        const resultado: LinhaPreview[] =
-          dadosSemCabecalho
-            .filter((linha) =>
-              linha.some(
-                (valor) =>
-                  valor !== null &&
-                  valor !== undefined &&
-                  String(valor).trim() !== '',
-              ),
+        const resultado: LinhaPreview[] = dadosSemCabecalho
+          .filter((linha) =>
+            linha.some(
+              (valor) =>
+                valor !== null &&
+                valor !== undefined &&
+                String(valor).trim() !== '',
+            ),
+          )
+          .map((linha) => {
+            const categoria = obterValor(
+              linha,
+              mapeamento.categoria,
             )
-            .map((linha) => {
-              const categoria = obterValor(
-                linha,
-                mapeamento.categoria,
+
+            let metodoPagamento = ''
+
+            if (configuracaoPagamento?.tipo === 'fixo') {
+              metodoPagamento = configuracaoPagamento.valor || ''
+            } else {
+              metodoPagamento = String(
+                obterValor(
+                  linha,
+                  configuracaoPagamento?.coluna ||
+                    mapeamento.metodo_pagamento,
+                ),
               )
+            }
 
-              let metodoPagamento = ''
+            const valorOriginal = obterValor(
+              linha,
+              mapeamento.valor,
+            )
 
-              if (
-                configuracaoPagamento?.tipo ===
-                'fixo'
-              ) {
-                metodoPagamento =
-                  configuracaoPagamento.valor || ''
-              } else {
-                metodoPagamento = String(
-                  obterValor(
-                    linha,
-                    configuracaoPagamento?.coluna ||
-                      mapeamento.metodo_pagamento,
-                  ),
-                )
-              }
+            const valorConvertido = converterValor(valorOriginal)
 
-              return {
-                data: formatarData(
-                  obterValor(
-                    linha,
-                    mapeamento.data,
-                  ),
-                ),
-                estabelecimento: String(
-                  obterValor(
-                    linha,
-                    mapeamento.estabelecimento,
-                  ),
-                ),
-                valor: formatarValor(
-                  obterValor(
-                    linha,
-                    mapeamento.valor,
-                  ),
-                ),
-                metodoPagamento,
-                categoria: String(categoria),
-                subcategoria: String(
-                  obterValor(
-                    linha,
-                    mapeamento.subcategoria,
-                  ),
-                ),
-                parcelaAtual: String(
-                  obterValor(
-                    linha,
-                    mapeamento.parcela_atual,
-                  ),
-                ),
-                parcelaTotal: String(
-                  obterValor(
-                    linha,
-                    mapeamento.parcela_total,
-                  ),
-                ),
-                observacao: String(
-                  obterValor(
-                    linha,
-                    mapeamento.observacao,
-                  ),
-                ),
-              }
-            })
+            return {
+              data: formatarData(
+                obterValor(linha, mapeamento.data),
+              ),
+              estabelecimento: String(
+                obterValor(linha, mapeamento.estabelecimento),
+              ),
+              valor:
+                valorConvertido === null
+                  ? ''
+                  : String(valorConvertido),
+              metodoPagamento,
+              categoria: String(categoria),
+              subcategoria: String(
+                obterValor(linha, mapeamento.subcategoria),
+              ),
+              parcelaAtual: String(
+                obterValor(linha, mapeamento.parcela_atual),
+              ),
+              parcelaTotal: String(
+                obterValor(linha, mapeamento.parcela_total),
+              ),
+              observacao: String(
+                obterValor(linha, mapeamento.observacao),
+              ),
+            }
+          })
 
         setLinhas(resultado)
       } catch (error) {
@@ -374,8 +344,7 @@ function PreviewPlanilha() {
 
             <p className="mt-2 max-w-3xl text-sm leading-6 text-[#68736d]">
               Confira como os dados da sua planilha serão
-              interpretados antes de enviá-los para sua
-              conta.
+              interpretados antes de enviá-los para sua conta.
             </p>
           </div>
         </div>
@@ -479,8 +448,7 @@ function PreviewPlanilha() {
                 </div>
 
                 <p className="text-xs text-[#8a958f]">
-                  Os dados abaixo ainda não foram
-                  importados.
+                  Os dados abaixo ainda não foram importados.
                 </p>
               </div>
 
@@ -492,31 +460,24 @@ function PreviewPlanilha() {
                         <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-[#7d8983]">
                           Data
                         </th>
-
                         <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-[#7d8983]">
                           Estabelecimento
                         </th>
-
                         <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-[0.12em] text-[#7d8983]">
                           Valor
                         </th>
-
                         <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-[#7d8983]">
                           Método
                         </th>
-
                         <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-[#7d8983]">
                           Categoria
                         </th>
-
                         <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-[#7d8983]">
                           Subcategoria
                         </th>
-
                         <th className="px-4 py-3 text-center text-[10px] font-semibold uppercase tracking-[0.12em] text-[#7d8983]">
                           Parcela
                         </th>
-
                         <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-[#7d8983]">
                           Observação
                         </th>
@@ -524,119 +485,76 @@ function PreviewPlanilha() {
                     </thead>
 
                     <tbody>
-                      {linhas.map((linha, indice) => {
-                        const categoriaExiste =
-                          categorias.some(
-                            (item) =>
-                              item.nome.toLowerCase() ===
-                              linha.categoria.toLowerCase(),
-                          )
+                      {linhas.map((linha, indice) => (
+                        <tr
+                          key={`${linha.data}-${linha.estabelecimento}-${indice}`}
+                          className="border-b border-[#edf0eb] last:border-b-0"
+                        >
+                          <td className="whitespace-nowrap px-4 py-3 text-sm text-[#68736d]">
+                            {linha.data || '—'}
+                          </td>
 
-                        return (
-                          <tr
-                            key={indice}
-                            className="border-b border-[#edf0eb] last:border-b-0"
-                          >
-                            <td className="whitespace-nowrap px-4 py-3 text-xs text-[#526159]">
-                              {linha.data}
-                            </td>
+                          <td className="px-4 py-3 text-sm font-medium">
+                            {linha.estabelecimento || '—'}
+                          </td>
 
-                            <td className="max-w-[280px] px-4 py-3 text-xs font-medium text-[#10231c]">
-                              <span className="block truncate">
-                                {linha.estabelecimento}
-                              </span>
-                            </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-semibold">
+                            {formatarValor(linha.valor) || '—'}
+                          </td>
 
-                            <td className="whitespace-nowrap px-4 py-3 text-right text-xs font-semibold text-[#10231c]">
-                              {linha.valor}
-                            </td>
+                          <td className="px-4 py-3 text-sm text-[#68736d]">
+                            {linha.metodoPagamento || '—'}
+                          </td>
 
-                            <td className="whitespace-nowrap px-4 py-3 text-xs text-[#526159]">
-                              {linha.metodoPagamento}
-                            </td>
+                          <td className="px-4 py-3 text-sm text-[#68736d]">
+                            {linha.categoria || '—'}
+                          </td>
 
-                            <td className="px-4 py-3 text-xs">
-                              {linha.categoria ? (
-                                <span
-                                  className={`rounded-lg px-2 py-1 ${
-                                    categoriaExiste
-                                      ? 'bg-[#eef7d2] text-[#52621f]'
-                                      : 'bg-[#f5f3ea] text-[#8a8063]'
-                                  }`}
-                                >
-                                  {linha.categoria}
-                                </span>
-                              ) : (
-                                <span className="text-[#b0b8b2]">
-                                  —
-                                </span>
-                              )}
-                            </td>
+                          <td className="px-4 py-3 text-sm text-[#68736d]">
+                            {linha.subcategoria || '—'}
+                          </td>
 
-                            <td className="px-4 py-3 text-xs text-[#68736d]">
-                              {linha.subcategoria || '—'}
-                            </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-center text-sm text-[#68736d]">
+                            {linha.parcelaAtual && linha.parcelaTotal
+                              ? `${linha.parcelaAtual}/${linha.parcelaTotal}`
+                              : linha.parcelaAtual || '—'}
+                          </td>
 
-                            <td className="whitespace-nowrap px-4 py-3 text-center text-xs text-[#68736d]">
-                              {linha.parcelaAtual
-                                ? `${linha.parcelaAtual}${
-                                    linha.parcelaTotal
-                                      ? `/${linha.parcelaTotal}`
-                                      : ''
-                                  }`
-                                : '—'}
-                            </td>
-
-                            <td className="max-w-[220px] px-4 py-3 text-xs text-[#68736d]">
-                              <span className="block truncate">
-                                {linha.observacao || '—'}
-                              </span>
-                            </td>
-                          </tr>
-                        )
-                      })}
+                          <td className="max-w-[220px] truncate px-4 py-3 text-sm text-[#68736d]">
+                            {linha.observacao || '—'}
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
               </div>
-            </section>
 
-            {categoriasEncontradas.length > 0 && (
-              <div className="mt-5 rounded-[22px] border border-[#dfe3dc] bg-white p-5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7d8983]">
-                  Categorias encontradas
-                </p>
+              {categoriasEncontradas.length > 0 && (
+                <div className="mt-5">
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8a958f]">
+                    Categorias encontradas
+                  </p>
 
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {categoriasEncontradas.map((categoria) => {
-                    const encontrada = categorias.find(
-                      (item) =>
-                        item.nome.toLowerCase() ===
-                        categoria.toLowerCase(),
-                    )
-
-                    return (
+                  <div className="flex flex-wrap gap-2">
+                    {categoriasEncontradas.map((categoria) => (
                       <span
                         key={categoria}
-                        className={`rounded-xl px-3 py-2 text-xs font-medium ${
-                          encontrada
-                            ? 'bg-[#eef7d2] text-[#52621f]'
-                            : 'bg-[#f5f3ea] text-[#8a8063]'
-                        }`}
+                        className="rounded-full border border-[#dfe3dc] bg-[#f7f7f0] px-3 py-1.5 text-xs text-[#68736d]"
                       >
                         {categoria}
                       </span>
-                    )
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </section>
 
-            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
               <button
                 type="button"
                 onClick={voltar}
-                className="h-11 rounded-xl border border-[#dfe3dc] bg-white px-5 text-sm font-medium text-[#526159] transition hover:bg-[#f5f6f1]"
+                className="rounded-xl border border-[#dfe3dc] bg-white px-5 py-3 text-sm font-semibold text-[#10231c] transition hover:bg-[#f3f4f1]"
               >
                 Voltar
               </button>
@@ -644,9 +562,9 @@ function PreviewPlanilha() {
               <button
                 type="button"
                 onClick={continuar}
-                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#10231c] px-6 text-sm font-semibold text-white transition hover:bg-[#19372c]"
+                disabled={linhas.length === 0}
+                className="rounded-xl bg-[#10231c] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#203b30] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <Upload size={16} />
                 Continuar para importação
               </button>
             </div>
