@@ -6,7 +6,6 @@ import {
   LogOut,
   Menu,
   MoreHorizontal,
-  PieChart,
   Receipt,
 
   ShoppingBag,
