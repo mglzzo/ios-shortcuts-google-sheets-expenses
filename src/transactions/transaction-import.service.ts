@@ -13,6 +13,8 @@ export interface TransacaoImportada {
   metodoPagamento?: string;
   categoria?: string;
   observacao?: string;
+  parcelaAtual?: number | string | null;
+  parcelaTotal?: number | string | null;
 }
 
 export interface PreviewImportacao {
@@ -34,6 +36,8 @@ interface MapaColunas {
   metodoPagamento?: number;
   categoria?: number;
   observacao?: number;
+  parcelaAtual?: number;
+  parcelaTotal?: number;
 }
 
 function formatarData(data: Date): string {
@@ -179,6 +183,55 @@ function normalizarData(
   );
 }
 
+function normalizarParcela(
+  valor: unknown,
+  nomeCampo: string
+): number | null {
+  if (valor === null || valor === undefined) {
+    return null;
+  }
+
+  const texto =
+    typeof valor === "number"
+      ? String(valor)
+      : valorCelulaParaString(
+          valor as ExcelJS.CellValue
+        ).trim();
+
+  if (!texto) {
+    return null;
+  }
+
+  const numero = Number(texto.replace(",", "."));
+
+  if (
+    !Number.isInteger(numero) ||
+    numero < 1 ||
+    numero > 999
+  ) {
+    throw new Error(
+      `${nomeCampo} inválida: ${texto}`
+    );
+  }
+
+  return numero;
+}
+
+function validarParcelas(
+  parcelaAtual: number | null,
+  parcelaTotal: number | null
+): void {
+  if (
+    parcelaAtual !== null &&
+    parcelaTotal !== null &&
+    parcelaAtual > parcelaTotal
+  ) {
+    throw new Error(
+      `Parcela atual (${parcelaAtual}) maior que o total de parcelas (${parcelaTotal}).`
+    );
+  }
+}
+
 function criarMapaColunas(
   colunas: string[]
 ): Partial<MapaColunas> {
@@ -230,6 +283,24 @@ function criarMapaColunas(
       nome === "observacoes"
     ) {
       mapa.observacao = numeroColuna;
+    }
+
+    if (
+      nome === "parcela atual" ||
+      nome === "parcela_atual" ||
+      nome === "parcela"
+    ) {
+      mapa.parcelaAtual = numeroColuna;
+    }
+
+    if (
+      nome === "parcela total" ||
+      nome === "parcela_total" ||
+      nome === "total de parcelas" ||
+      nome === "total parcelas" ||
+      nome === "parcelas"
+    ) {
+      mapa.parcelaTotal = numeroColuna;
     }
   });
 
@@ -371,6 +442,26 @@ export async function converterExcelParaPreview(
             ).trim()
           : null;
 
+      const parcelaAtual = mapaColunas.parcelaAtual
+        ? normalizarParcela(
+            row.getCell(
+              mapaColunas.parcelaAtual
+            ).value,
+            "Parcela atual"
+          )
+        : null;
+
+      const parcelaTotal = mapaColunas.parcelaTotal
+        ? normalizarParcela(
+            row.getCell(
+              mapaColunas.parcelaTotal
+            ).value,
+            "Total de parcelas"
+          )
+        : null;
+
+      validarParcelas(parcelaAtual, parcelaTotal);
+
       transacoes.push({
   data,
   estabelecimento,
@@ -383,6 +474,12 @@ export async function converterExcelParaPreview(
     : {}),
   ...(observacao
     ? { observacao }
+    : {}),
+  ...(parcelaAtual !== null
+    ? { parcelaAtual }
+    : {}),
+  ...(parcelaTotal !== null
+    ? { parcelaTotal }
     : {}),
 });
     } catch (error) {
@@ -481,6 +578,18 @@ export async function confirmarImportacao(
         }
       }
 
+      const parcelaAtual = normalizarParcela(
+        transacao.parcelaAtual,
+        "Parcela atual"
+      );
+
+      const parcelaTotal = normalizarParcela(
+        transacao.parcelaTotal,
+        "Total de parcelas"
+      );
+
+      validarParcelas(parcelaAtual, parcelaTotal);
+
       valoresParaInserir.push({
         contaId,
         data: transacao.data,
@@ -492,6 +601,8 @@ export async function confirmarImportacao(
         categoriaId,
         observacao:
           transacao.observacao ?? null,
+        parcelaAtual,
+        parcelaTotal,
         origem: "manual",
       });
     } catch (error) {
@@ -518,4 +629,3 @@ export async function confirmarImportacao(
     erros,
   };
 }
-
