@@ -621,7 +621,7 @@ export async function confirmarImportacao(
       .insert(transacoes)
       .values(valoresParaInserir);
   }
-
+  
   return {
     total: transacoesImportadas.length,
     inseridas: valoresParaInserir.length,
