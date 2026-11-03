@@ -7,8 +7,12 @@ import Planilha from './pages/planilha'
 import ConfigurarPlanilha from './pages/configurar-planilha'
 import PrepararPlanilha from './pages/preparar-planilha'
 import PreviewPlanilha from './pages/preview-planilha'
-import ConfirmarPlanilha from './pages/confirmar-planilha'
 import ConfirmarPlanilhaEntradas from './pages/confirmar-planilha-entradas'
+import ConfiguracaoPerfil from './pages/configuracao-perfil'
+import Lancamentos from './pages/lancamento'
+import Metas from './pages/metas'
+import Aprender from './pages/aprender'
+
 
 function App() {
   return (
@@ -31,14 +35,21 @@ function App() {
           path="/conexoes/planilha/preparar"
           element={<PrepararPlanilha />}
         />
-        <Route
-          path="/conexoes/planilha/confirmar"
-          element={<ConfirmarPlanilha />}
-        />
+
         <Route
           path="/conexoes/planilha/confirmar-entradas"
           element={<ConfirmarPlanilhaEntradas />}
         />
+
+        <Route
+          path="/configuracao-perfil"
+          element={<ConfiguracaoPerfil />}
+        />
+        <Route path="/lancamentos" element={<Lancamentos />} />
+
+        <Route path="/metas" element={<Metas />} />
+
+        <Route path="/aprender" element={<Aprender />} />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

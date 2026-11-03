@@ -1,12 +1,9 @@
 import {
-  ArrowRight,
   CheckCircle2,
   Eye,
   EyeOff,
   LockKeyhole,
   Mail,
-  ShieldCheck,
-  Sparkles,
   UserRound,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -29,7 +26,6 @@ function Cadastro() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-
     setError('')
 
     if (senha !== confirmarSenha) {
@@ -40,12 +36,7 @@ function Cadastro() {
     setLoading(true)
 
     try {
-      await register({
-        nome,
-        email,
-        senha,
-      })
-
+      await register({ nome, email, senha })
       setSuccess(true)
 
       setTimeout(() => {
@@ -63,123 +54,52 @@ function Cadastro() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f7f0] lg:grid lg:grid-cols-2">
-      <section className="relative hidden min-h-screen overflow-hidden bg-[#10231c] text-white lg:block">
-        <div className="pointer-events-none absolute -bottom-[360px] -right-[180px] h-[760px] w-[760px] rounded-full border border-[#283d31]" />
+    <main className="min-h-screen bg-[#fafafa] lg:grid lg:grid-cols-[18%_82%]">
+      <aside className="relative min-h-[112px] overflow-hidden bg-[#172b4d] px-7 py-7 text-white lg:min-h-screen lg:px-8 lg:py-9">
+        <div className="pointer-events-none absolute -bottom-36 -left-24 h-72 w-72 rounded-full border border-white/10" />
+        <div className="pointer-events-none absolute -bottom-28 -left-16 h-56 w-56 rounded-full border border-white/10" />
 
-        <div className="pointer-events-none absolute -bottom-[300px] -right-[120px] h-[610px] w-[610px] rounded-full border border-[#354a29]" />
-
-        <div className="pointer-events-none absolute -bottom-[230px] -right-[60px] h-[470px] w-[470px] rounded-full border border-[#71852e]/60" />
-
-        <div className="absolute left-10 top-10">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#d8ff3e] text-sm font-bold text-[#10231c]">
-              F
-            </div>
-
-            <span className="text-[15px] font-semibold tracking-tight">
-              FinlyApp
-            </span>
+        <div className="relative flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#9274f5] text-lg font-bold text-[#172b4d]">
+            F
           </div>
+          <span className="text-[18px] font-semibold tracking-tight">FinlyApp</span>
         </div>
 
-        <div className="absolute left-10 right-10 top-[19%] max-w-[500px]">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#b9c7bf]">
-            Clareza para o seu dinheiro
-          </p>
+      </aside>
 
-          <h1 className="mt-5 text-[64px] font-light leading-[0.96] tracking-[-0.055em] text-[#f5f7ef]">
-            Gaste
-            <br />
-            melhor.
-            <br />
-            <span className="italic">Viva leve.</span>
-          </h1>
-
-          <p className="mt-7 max-w-[350px] text-[15px] leading-6 text-[#b8c8c0]">
-            Um jeito mais humano de entender para onde o
-            seu dinheiro está indo — sem planilhas e sem
-            culpa.
-          </p>
-        </div>
-
-        <div className="absolute bottom-10 left-10 right-10">
-          <div className="h-px bg-white/10" />
-
-          <div className="relative mt-7 w-[310px] overflow-hidden rounded-2xl border border-white/15 bg-white/[0.04] px-3 py-3">
-            <div className="pointer-events-none absolute -bottom-[170px] -right-[90px] h-[300px] w-[300px] rounded-full border border-[#283d31]" />
-
-            <div className="pointer-events-none absolute -bottom-[140px] -right-[65px] h-[250px] w-[250px] rounded-full border border-[#354a29]" />
-
-            <div className="relative flex items-center gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#d8ff3e] text-[#10231c]">
-                <Sparkles size={15} />
-              </div>
-
-              <div>
-                <p className="text-xs font-semibold text-white">
-                  Seu dinheiro, mais claro.
-                </p>
-
-                <p className="mt-0.5 text-[10px] text-[#9fb0a7]">
-                  Uma visão simples para decisões melhores.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f7f7f0] px-6 py-10 sm:px-10">
-        <div className="pointer-events-none absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-[#d8ff3e]/10 blur-3xl" />
-
-        <div className="relative w-full max-w-[390px]">
-          <div className="mb-7">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#637069]">
-              Comece agora
+      <section className="flex min-h-[calc(100vh-112px)] items-center justify-center px-5 py-8 sm:px-8 lg:min-h-screen lg:px-10">
+        <div className="w-full max-w-[448px] rounded-xl border border-[#edf0f4] bg-white px-7 py-7 shadow-[0_8px_30px_rgba(20,35,60,0.06)] sm:px-9 sm:py-8">
+          <header className="mb-5 text-center">
+            <h1 className="text-[25px] font-bold leading-tight tracking-[-0.035em] text-[#172b4d] sm:text-[27px]">
+              Crie sua conta
+            </h1>
+            <p className="mt-2 text-[14px] text-[#8792a3]">
+              Comece a cuidar melhor do seu dinheiro.
             </p>
-
-            <h2 className="mt-4 text-[32px] font-normal tracking-[-0.04em] text-[#10231c]">
-              Crie sua conta.
-            </h2>
-
-            <p className="mt-3 max-w-[360px] text-[13px] leading-5 text-[#748078]">
-              Tenha uma visão mais clara da sua vida financeira
-              em poucos passos.
-            </p>
-          </div>
+          </header>
 
           {success ? (
-            <div className="rounded-2xl border border-[#d9e5bd] bg-white/80 p-6 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#d8ff3e] text-[#10231c]">
+            <div className="rounded-xl border border-[#e4defb] bg-[#faf8ff] p-6 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#7957e8] text-white">
                 <CheckCircle2 size={23} />
               </div>
-
-              <h3 className="mt-4 text-base font-semibold text-[#10231c]">
+              <h2 className="mt-4 text-base font-semibold text-[#172b4d]">
                 Conta criada com sucesso!
-              </h3>
-
-              <p className="mt-2 text-xs leading-5 text-[#748078]">
+              </h2>
+              <p className="mt-2 text-xs leading-5 text-[#8792a3]">
                 Você será redirecionada para a tela de login.
               </p>
             </div>
           ) : (
             <>
-              <form onSubmit={handleSubmit}>
+              <form onSubmit={handleSubmit} className="space-y-3.5">
                 <div>
-                  <label
-                    htmlFor="nome"
-                    className="mb-2 block text-[11px] font-semibold text-[#34433b]"
-                  >
+                  <label htmlFor="nome" className="mb-2 block text-[12px] font-semibold text-[#263750]">
                     Nome
                   </label>
-
                   <div className="relative">
-                    <UserRound
-                      size={15}
-                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#98a39d]"
-                    />
-
+                    <UserRound size={17} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#8b96a8]" />
                     <input
                       id="nome"
                       type="text"
@@ -188,180 +108,106 @@ function Cadastro() {
                       placeholder="Seu nome"
                       required
                       autoComplete="name"
-                      className="h-[47px] w-full rounded-xl border border-[#d9ded7] bg-white/70 pl-11 pr-4 text-[13px] text-[#10231c] outline-none transition placeholder:text-[#a5aea8] focus:border-[#a8c72c] focus:bg-white focus:ring-2 focus:ring-[#d8ff3e]/20"
+                      className="h-[43px] w-full rounded-lg border border-[#dce1e8] bg-white pl-11 pr-4 text-[13px] text-[#263750] outline-none transition placeholder:text-[#9aa4b3] focus:border-[#8061ed] focus:ring-2 focus:ring-[#8061ed]/10"
                     />
                   </div>
                 </div>
 
-                <div className="mt-4">
-                  <label
-                    htmlFor="email"
-                    className="mb-2 block text-[11px] font-semibold text-[#34433b]"
-                  >
+                <div>
+                  <label htmlFor="email" className="mb-2 block text-[12px] font-semibold text-[#263750]">
                     E-mail
                   </label>
-
                   <div className="relative">
-                    <Mail
-                      size={15}
-                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#98a39d]"
-                    />
-
+                    <Mail size={17} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#8b96a8]" />
                     <input
                       id="email"
                       type="email"
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
-                      placeholder="voce@email.com"
+                      placeholder="Digite seu e-mail"
                       required
                       autoComplete="email"
-                      className="h-[47px] w-full rounded-xl border border-[#d9ded7] bg-white/70 pl-11 pr-4 text-[13px] text-[#10231c] outline-none transition placeholder:text-[#a5aea8] focus:border-[#a8c72c] focus:bg-white focus:ring-2 focus:ring-[#d8ff3e]/20"
+                      className="h-[43px] w-full rounded-lg border border-[#dce1e8] bg-white pl-11 pr-4 text-[13px] text-[#263750] outline-none transition placeholder:text-[#9aa4b3] focus:border-[#8061ed] focus:ring-2 focus:ring-[#8061ed]/10"
                     />
                   </div>
                 </div>
 
-                <div className="mt-4">
-                  <label
-                    htmlFor="password"
-                    className="mb-2 block text-[11px] font-semibold text-[#34433b]"
-                  >
+                <div>
+                  <label htmlFor="password" className="mb-2 block text-[12px] font-semibold text-[#263750]">
                     Senha
                   </label>
-
                   <div className="relative">
-                    <LockKeyhole
-                      size={15}
-                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#98a39d]"
-                    />
-
+                    <LockKeyhole size={17} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#8b96a8]" />
                     <input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
                       value={senha}
                       onChange={(event) => setSenha(event.target.value)}
-                      placeholder="••••••••"
+                      placeholder="Digite sua senha"
                       required
                       autoComplete="new-password"
-                      className="h-[47px] w-full rounded-xl border border-[#d9ded7] bg-white/70 pl-11 pr-12 text-[13px] text-[#10231c] outline-none transition placeholder:text-[#a5aea8] focus:border-[#a8c72c] focus:bg-white focus:ring-2 focus:ring-[#d8ff3e]/20"
+                      className="h-[43px] w-full rounded-lg border border-[#dce1e8] bg-white pl-11 pr-12 text-[13px] text-[#263750] outline-none transition placeholder:text-[#9aa4b3] focus:border-[#8061ed] focus:ring-2 focus:ring-[#8061ed]/10"
                     />
-
                     <button
                       type="button"
-                      onClick={() =>
-                        setShowPassword((value) => !value)
-                      }
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#89958e] transition hover:text-[#10231c]"
-                      aria-label={
-                        showPassword
-                          ? 'Ocultar senha'
-                          : 'Mostrar senha'
-                      }
+                      onClick={() => setShowPassword((value) => !value)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8792a3] transition hover:text-[#172b4d]"
+                      aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                     >
-                      {showPassword ? (
-                        <EyeOff size={16} />
-                      ) : (
-                        <Eye size={16} />
-                      )}
+                      {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                     </button>
                   </div>
                 </div>
 
-                <div className="mt-4">
-                  <label
-                    htmlFor="confirmarSenha"
-                    className="mb-2 block text-[11px] font-semibold text-[#34433b]"
-                  >
+                <div>
+                  <label htmlFor="confirmarSenha" className="mb-2 block text-[12px] font-semibold text-[#263750]">
                     Confirmar senha
                   </label>
-
                   <div className="relative">
-                    <LockKeyhole
-                      size={15}
-                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#98a39d]"
-                    />
-
+                    <LockKeyhole size={17} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#8b96a8]" />
                     <input
                       id="confirmarSenha"
-                      type={
-                        showConfirmPassword ? 'text' : 'password'
-                      }
+                      type={showConfirmPassword ? 'text' : 'password'}
                       value={confirmarSenha}
-                      onChange={(event) =>
-                        setConfirmarSenha(event.target.value)
-                      }
-                      placeholder="••••••••"
+                      onChange={(event) => setConfirmarSenha(event.target.value)}
+                      placeholder="Digite sua senha novamente"
                       required
                       autoComplete="new-password"
-                      className="h-[47px] w-full rounded-xl border border-[#d9ded7] bg-white/70 pl-11 pr-12 text-[13px] text-[#10231c] outline-none transition placeholder:text-[#a5aea8] focus:border-[#a8c72c] focus:bg-white focus:ring-2 focus:ring-[#d8ff3e]/20"
+                      className="h-[43px] w-full rounded-lg border border-[#dce1e8] bg-white pl-11 pr-12 text-[13px] text-[#263750] outline-none transition placeholder:text-[#9aa4b3] focus:border-[#8061ed] focus:ring-2 focus:ring-[#8061ed]/10"
                     />
-
                     <button
                       type="button"
-                      onClick={() =>
-                        setShowConfirmPassword(
-                          (value) => !value,
-                        )
-                      }
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#89958e] transition hover:text-[#10231c]"
-                      aria-label={
-                        showConfirmPassword
-                          ? 'Ocultar senha'
-                          : 'Mostrar senha'
-                      }
+                      onClick={() => setShowConfirmPassword((value) => !value)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8792a3] transition hover:text-[#172b4d]"
+                      aria-label={showConfirmPassword ? 'Ocultar senha' : 'Mostrar senha'}
                     >
-                      {showConfirmPassword ? (
-                        <EyeOff size={16} />
-                      ) : (
-                        <Eye size={16} />
-                      )}
+                      {showConfirmPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                     </button>
                   </div>
                 </div>
 
                 {error && (
-                  <div className="mt-4 rounded-xl border border-[#e5c9c5] bg-[#fff4f2] px-4 py-3">
-                    <p className="text-xs font-medium text-[#9b4d43]">
-                      Não foi possível criar sua conta
-                    </p>
-
-                    <p className="mt-1 text-[11px] leading-4 text-[#a9675f]">
-                      {error}
-                    </p>
+                  <div className="rounded-lg border border-[#f1cece] bg-[#fff5f5] px-4 py-3">
+                    <p className="text-xs font-medium text-[#a23f3f]">Não foi possível criar sua conta</p>
+                    <p className="mt-1 text-[11px] leading-4 text-[#a85b5b]">{error}</p>
                   </div>
                 )}
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="mt-5 flex h-[47px] w-full items-center justify-center gap-3 rounded-xl bg-[#d8ff3e] text-[12px] font-semibold text-[#10231c] shadow-[0_8px_24px_rgba(160,190,40,0.18)] transition hover:bg-[#cffa25] hover:shadow-[0_10px_28px_rgba(160,190,40,0.25)] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-2 flex h-[43px] w-full items-center justify-center rounded-lg bg-[#7957e8] text-[13px] font-semibold text-white shadow-sm transition hover:bg-[#6947d8] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {loading ? 'Criando conta...' : 'Criar minha conta'}
-
-                  {!loading && <ArrowRight size={17} />}
                 </button>
               </form>
 
-              <p className="mt-6 text-center text-[11px] text-[#7d8983]">
+              <p className="mt-5 text-center text-[12px] text-[#8792a3]">
                 Já tem uma conta?{' '}
-                <Link
-                  to="/login"
-                  className="font-semibold text-[#52741e] transition hover:text-[#10231c]"
-                >
+                <Link to="/login" className="font-semibold text-[#7655df] transition hover:text-[#5e3bc9]">
                   Entrar agora
                 </Link>
               </p>
-
-              <div className="mt-6 flex gap-3 rounded-2xl bg-[#eef1e8] px-4 py-3">
-                <ShieldCheck
-                  size={15}
-                  className="mt-0.5 shrink-0 text-[#6c9825]"
-                />
-
-                <p className="text-[10px] leading-4 text-[#718078]">
-                  Seus dados estão seguros com a gente.
-                  Cuidamos das suas informações com segurança e privacidade.
-                </p>
-              </div>
             </>
           )}
         </div>

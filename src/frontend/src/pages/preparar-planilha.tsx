@@ -1,12 +1,12 @@
 import {
-    ArrowLeft,
-    Check,
+    CheckCircle2,
     ChevronDown,
     FileSpreadsheet,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import * as XLSX from 'xlsx'
+import MainLayout from '../../components/layout/MainLayout'
 
 interface Configuracao {
     separador: string
@@ -15,22 +15,20 @@ interface Configuracao {
 }
 
 function detectarSeparador(texto: string) {
-    const primeiraLinha = texto
-        .split(/\r?\n/)
-        .find((linha) => linha.trim())
+    const primeiraLinha = texto.split(/\r?\n/).find((linha) => linha.trim())
 
-    if (!primeiraLinha) {
-        return ','
-    }
+    if (!primeiraLinha) return ','
 
     const separadores = [';', ',', '\t', '|']
 
-    return separadores.reduce((melhor, atual) => {
-        const quantidadeAtual = primeiraLinha.split(atual).length
-        const quantidadeMelhor = primeiraLinha.split(melhor).length
-
-        return quantidadeAtual > quantidadeMelhor ? atual : melhor
-    }, ',')
+    return separadores.reduce(
+        (melhor, atual) =>
+            primeiraLinha.split(atual).length >
+                primeiraLinha.split(melhor).length
+                ? atual
+                : melhor,
+        ',',
+    )
 }
 
 function lerCsv(texto: string, separador: string): string[][] {
@@ -42,26 +40,21 @@ function lerCsv(texto: string, separador: string): string[][] {
 
     const primeiraAba = workbook.SheetNames[0]
 
-    if (!primeiraAba) {
-        return []
-    }
+    if (!primeiraAba) return []
 
-    const worksheet = workbook.Sheets[primeiraAba]
-
-    const linhas = XLSX.utils.sheet_to_json(worksheet, {
-        header: 1,
-        defval: '',
-        raw: true,
-    }) as unknown[][]
+    const linhas = XLSX.utils.sheet_to_json(
+        workbook.Sheets[primeiraAba],
+        {
+            header: 1,
+            defval: '',
+            raw: true,
+        },
+    ) as unknown[][]
 
     return linhas.map((linha) =>
-        linha.map((celula) => {
-            if (celula === null || celula === undefined) {
-                return ''
-            }
-
-            return String(celula)
-        }),
+        linha.map((celula) =>
+            celula === null || celula === undefined ? '' : String(celula),
+        ),
     )
 }
 
@@ -77,10 +70,19 @@ function PrepararPlanilha() {
     const [dados, setDados] = useState<string[][]>([])
     const [erro, setErro] = useState('')
     const [carregando, setCarregando] = useState(true)
+    const [avisoAberto, setAvisoAberto] = useState(false)
 
-    const ehCsv = useMemo(() => {
-        return arquivo?.name.toLowerCase().endsWith('.csv') ?? false
-    }, [arquivo])
+    const ehCsv = useMemo(
+        () => arquivo?.name.toLowerCase().endsWith('.csv') ?? false,
+        [arquivo],
+    )
+
+    const tipoImportacao =
+        location.state?.tipoImportacao === 'entrada' ||
+            sessionStorage.getItem('finly-tipo-importacao-planilha') === 'entrada'
+            ? 'entrada'
+            : 'saida'
+
 
     useEffect(() => {
         if (!arquivo) {
@@ -88,89 +90,99 @@ function PrepararPlanilha() {
             return
         }
 
-        const arquivoSelecionado = arquivo
+        const arquivoAtual = arquivo
+        let ativo = true
 
         async function carregarArquivo() {
             try {
                 setCarregando(true)
                 setErro('')
 
-                if (arquivoSelecionado.name.toLowerCase().endsWith('.csv')) {
-                    const texto = await arquivoSelecionado.text()
-                    const separadorDetectado = detectarSeparador(texto)
+                if (arquivoAtual.name.toLowerCase().endsWith('.csv')) {
+                    const texto = await arquivoAtual.text()
+                    const detectado = detectarSeparador(texto)
+                    const linhas = lerCsv(texto, detectado)
 
-                    setSeparador(separadorDetectado)
+                    if (ativo) {
+                        setSeparador(detectado)
+                        setDados(linhas)
+                    }
+                } else {
+                    const buffer = await arquivoAtual.arrayBuffer()
 
-                    const linhas = lerCsv(texto, separadorDetectado)
+                    const workbook = XLSX.read(buffer, {
+                        type: 'array',
+                        cellDates: true,
+                    })
 
-                    setDados(linhas)
+                    const primeiraAba = workbook.SheetNames[0]
 
-                    return
-                }
+                    if (!primeiraAba) {
+                        throw new Error(
+                            'Não foi encontrada nenhuma aba na planilha.',
+                        )
+                    }
 
-                const buffer = await arquivoSelecionado.arrayBuffer()
+                    const linhas = XLSX.utils.sheet_to_json(
+                        workbook.Sheets[primeiraAba],
+                        {
+                            header: 1,
+                            defval: '',
+                            raw: true,
+                        },
+                    ) as unknown[][]
 
-                const workbook = XLSX.read(buffer, {
-                    type: 'array',
-                    cellDates: true,
-                })
-
-                const primeiraAba = workbook.SheetNames[0]
-
-                if (!primeiraAba) {
-                    throw new Error('Não foi encontrada nenhuma aba na planilha.')
-                }
-
-                const worksheet = workbook.Sheets[primeiraAba]
-
-                const linhas = XLSX.utils.sheet_to_json(worksheet, {
-                    header: 1,
-                    defval: '',
-                    raw: true,
-                }) as unknown[][]
-
-                const linhasFormatadas: string[][] = linhas
-                    .map((linha) =>
+                    const formatadas = linhas.map((linha) =>
                         linha.map((celula) => {
                             if (celula instanceof Date) {
                                 return celula.toLocaleDateString('pt-BR')
                             }
 
-                            if (celula === null || celula === undefined) {
-                                return ''
-                            }
-
-                            return String(celula)
+                            return celula === null || celula === undefined
+                                ? ''
+                                : String(celula)
                         }),
                     )
 
-                setDados(linhasFormatadas)
+                    if (ativo) {
+                        setDados(formatadas)
+                    }
+                }
             } catch {
-                setErro('Não foi possível ler essa planilha.')
+                if (ativo) {
+                    setErro(
+                        'Não foi possível ler essa planilha. Verifique se o arquivo está válido.',
+                    )
+                }
             } finally {
-                setCarregando(false)
+                if (ativo) {
+                    setCarregando(false)
+                }
             }
         }
 
         carregarArquivo()
+
+        return () => {
+            ativo = false
+        }
     }, [arquivo, navigate])
 
-    function atualizarSeparador(novoSeparador: string) {
-        setSeparador(novoSeparador)
 
-        if (!arquivo || !ehCsv) {
-            return
-        }
+    function atualizarSeparador(novo: string) {
+        setSeparador(novo)
+
+        if (!arquivo || !ehCsv) return
 
         arquivo.text().then((texto) => {
             try {
-                const linhas = lerCsv(texto, novoSeparador)
-
-                setDados(linhas)
+                setDados(lerCsv(texto, novo))
                 setErro('')
             } catch {
                 setDados([])
-                setErro('Não foi possível interpretar a planilha com esse separador.')
+                setErro(
+                    'Não foi possível interpretar a planilha com esse separador.',
+                )
             }
         })
     }
@@ -180,7 +192,6 @@ function PrepararPlanilha() {
             navigate('/conexoes/planilha')
             return
         }
-
         const configuracao: Configuracao = {
             separador,
             formatoData,
@@ -191,239 +202,299 @@ function PrepararPlanilha() {
             state: {
                 arquivo,
                 configuracao,
+                tipoImportacao,
             },
         })
     }
 
-    if (!arquivo) {
-        return null
-    }
+
+    if (!arquivo) return null
 
     return (
-        <div className="min-h-screen bg-[#f7f7f0] text-[#10231c]">
-            <main className="mx-auto max-w-[1180px] px-5 py-6 sm:px-8 lg:px-11 lg:py-9">
-                <button
-                    type="button"
-                    onClick={() => navigate('/conexoes/planilha')}
-                    className="mb-8 flex items-center gap-2 text-sm text-[#68736d] transition hover:text-[#10231c]"
-                >
-                    <ArrowLeft size={17} />
-                    Voltar para envio
-                </button>
+        <MainLayout>
+            <div className="min-h-screen bg-[#f5f6fb] text-[#17213b]">
+                    <div className="w-full max-w-none px-5 pb-8 pt-7 sm:px-10 lg:px-12">
 
-                <div className="max-w-3xl">
-                    
 
-                    <h1 className="mt-2 text-[34px] font-normal tracking-[-0.04em] text-[#10231c] sm:text-[42px]">
-                        Prepare sua planilha
-                    </h1>
+                        <div className="mb-8">
 
-                    <p className="mt-3 text-sm leading-6 text-[#68736d]">
-                        Antes de escolher as colunas, vamos entender como os dados estão
-                        organizados e padronizar datas e valores.
-                    </p>
-                </div>
 
-                <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_340px]">
-                    <section className="min-w-0 rounded-[24px] border border-[#dfe3dc] bg-white p-5 sm:p-7">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#d8ff3e] text-[#10231c]">
-                                <FileSpreadsheet size={20} />
-                            </div>
+                            <h1 className="text-[40px] font-extrabold leading-tight tracking-[-.7px] sm:text-[44px]">
+                                Prepare sua planilha
+                            </h1>
 
-                            <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold">
-                                    {arquivo.name}
-                                </p>
-
-                                <p className="mt-1 text-xs text-[#8a958f]">
-                                    Prévia dos primeiros registros
-                                </p>
-                            </div>
+                            <p className="mt-2 max-w-3xl text-[16px] leading-6 text-[#77839e] sm:text-[18px]">
+                                Antes de escolher as colunas, vamos entender como os dados
+                                estão organizados e padronizar datas e valores.
+                            </p>
                         </div>
 
-                        {erro ? (
-                            <div className="mt-6 rounded-xl border border-[#ead2cb] bg-[#fbf0ed] px-4 py-3 text-sm text-[#a85b4b]">
-                                {erro}
-                            </div>
-                        ) : carregando ? (
-                            <div className="mt-6 flex min-h-[300px] items-center justify-center rounded-2xl border border-[#e5e8e2] bg-[#fafaf6] text-sm text-[#7d8983]">
-                                Lendo sua planilha...
-                            </div>
-                        ) : dados.length === 0 ? (
-                            <div className="mt-6 flex min-h-[300px] items-center justify-center rounded-2xl border border-[#e5e8e2] bg-[#fafaf6] text-sm text-[#7d8983]">
-                                Não foram encontrados dados para mostrar.
-                            </div>
-                        ) : (
-                            <div className="mt-6 overflow-hidden rounded-2xl border border-[#e1e5df]">
-                                <div className="max-h-[430px] overflow-auto">
-                                    <table className="min-w-full border-collapse text-left text-xs">
-                                        <tbody>
-                                            {dados.map((linha, linhaIndex) => (
-                                                <tr
-                                                    key={linhaIndex}
-                                                    className={
-                                                        linhaIndex === 0
-                                                            ? 'bg-[#f1f4e5]'
-                                                            : 'bg-white'
-                                                    }
-                                                >
-                                                    <td className="sticky left-0 w-10 min-w-10 border-b border-r border-[#e5e8e2] bg-[#f7f8f3] px-3 py-3 text-center text-[10px] font-medium text-[#8b958f]">
-                                                        {linhaIndex + 1}
-                                                    </td>
+                        <div className="grid items-stretch gap-5 xl:grid-cols-[minmax(0,1fr)_370px]">
 
-                                                    {linha.map((celula, colunaIndex) => (
-                                                        <td
-                                                            key={colunaIndex}
-                                                            className={`min-w-[140px] border-b border-r border-[#e5e8e2] px-4 py-3 ${linhaIndex === 0
-                                                                ? 'font-semibold text-[#10231c]'
-                                                                : 'text-[#68736d]'
-                                                                }`}
+                            <section className="min-w-0 rounded-[22px] border border-[#e7eaf2] bg-white p-5 shadow-[0_2px_10px_rgba(20,30,60,0.025)] sm:p-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eeeaff] text-[#7653f5]">
+                                        <FileSpreadsheet size={21} />
+                                    </div>
+
+                                    <div className="min-w-0">
+                                        <p className="truncate text-sm font-semibold text-[#263654]">
+                                            {arquivo.name}
+                                        </p>
+
+                                        <p className="mt-1 text-xs text-[#8995ae]">
+                                            Prévia dos primeiros registros
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {erro ? (
+                                    <div className="mt-6 rounded-xl border border-[#f2d5d2] bg-[#fff5f4] px-4 py-3 text-sm text-[#b85d58]">
+                                        {erro}
+                                    </div>
+                                ) : carregando ? (
+                                    <div className="mt-6 flex min-h-[300px] items-center justify-center rounded-2xl border border-[#e8ebf2] bg-[#fafbfe] text-sm text-[#8995ae]">
+                                        Lendo sua planilha...
+                                    </div>
+                                ) : dados.length === 0 ? (
+                                    <div className="mt-6 flex min-h-[300px] items-center justify-center rounded-2xl border border-[#e8ebf2] bg-[#fafbfe] text-sm text-[#8995ae]">
+                                        Não foram encontrados dados para mostrar.
+                                    </div>
+                                ) : (
+                                    <div className="mt-6 overflow-hidden rounded-xl border border-[#e5e9f1]">
+                                        <div className="max-h-[470px] overflow-auto">
+                                            <table className="min-w-full border-collapse text-left text-xs">
+                                                <tbody>
+                                                    {dados.map((linha, linhaIndex) => (
+                                                        <tr
+                                                            key={linhaIndex}
+                                                            className={
+                                                                linhaIndex === 0
+                                                                    ? 'bg-[#f0efff]'
+                                                                    : 'bg-white'
+                                                            }
                                                         >
-                                                            {celula || '—'}
-                                                        </td>
+                                                            <td className="sticky left-0 w-10 min-w-10 border-b border-r border-[#e8ebf2] bg-[#f7f8fc] px-3 py-3 text-center text-[10px] text-[#8995ae]">
+                                                                {linhaIndex + 1}
+                                                            </td>
+
+                                                            {linha.map((celula, colunaIndex) => (
+                                                                <td
+                                                                    key={colunaIndex}
+                                                                    className={`min-w-[140px] border-b border-r border-[#e8ebf2] px-4 py-3 ${linhaIndex === 0
+                                                                        ? 'font-semibold text-[#263654]'
+                                                                        : 'text-[#71809e]'
+                                                                        }`}
+                                                                >
+                                                                    {celula || '—'}
+                                                                </td>
+                                                            ))}
+                                                        </tr>
                                                     ))}
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
+                            </section>
+
+
+                            <aside className="rounded-[22px] border border-[#e7eaf2] bg-white p-5 shadow-[0_2px_10px_rgba(20,30,60,0.025)] sm:p-6">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8995ae]">
+                                    01 · Organização
+                                </p>
+
+                                <h2 className="mt-2 text-lg font-bold text-[#172b4d]">
+                                    Como os dados estão escritos?
+                                </h2>
+
+                                <p className="mt-2 text-sm leading-5 text-[#7d8aa5]">
+                                    Essas configurações ajudam o FinlyApp a interpretar
+                                    corretamente as informações da sua planilha.
+                                </p>
+
+                                {ehCsv && (
+                                    <div className="mt-6">
+                                        <label className="text-xs font-semibold text-[#52617d]">
+                                            Separador das colunas
+                                        </label>
+
+                                        <div className="relative mt-2">
+                                            <select
+                                                value={separador}
+                                                onChange={(e) =>
+                                                    atualizarSeparador(e.target.value)
+                                                }
+                                                className="h-11 w-full appearance-none rounded-xl border border-[#e1e5ee] bg-[#fafbfe] px-3 pr-10 text-sm text-[#263654] outline-none focus:border-[#8b73f7]"
+                                            >
+                                                <option value=",">Vírgula (,)</option>
+                                                <option value=";">Ponto e vírgula (;)</option>
+                                                <option value={'\t'}>Tabulação</option>
+                                                <option value="|">Barra vertical (|)</option>
+                                            </select>
+
+                                            <ChevronDown
+                                                size={16}
+                                                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#8995ae]"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="mt-6">
+                                    <label className="text-xs font-semibold text-[#52617d]">
+                                        Formato das datas
+                                    </label>
+
+                                    <div className="relative mt-2">
+                                        <select
+                                            value={formatoData}
+                                            onChange={(e) => setFormatoData(e.target.value)}
+                                            className="h-11 w-full appearance-none rounded-xl border border-[#e1e5ee] bg-[#fafbfe] px-3 pr-10 text-sm text-[#263654] outline-none focus:border-[#8b73f7]"
+                                        >
+                                            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                                            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                        </select>
+
+                                        <ChevronDown
+                                            size={16}
+                                            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#8995ae]"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                    </section>
 
-                    <aside className="rounded-[24px] border border-[#dfe3dc] bg-white p-5 sm:p-6">
-                        <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7d8983]">
-                                01 · Organização
-                            </p>
+                                <div className="mt-5">
+                                    <label className="text-xs font-semibold text-[#52617d]">
+                                        Formato dos valores
+                                    </label>
 
-                            <h2 className="mt-2 text-lg font-semibold text-[#10231c]">
-                                Como os dados estão escritos?
-                            </h2>
+                                    <div className="relative mt-2">
+                                        <select
+                                            value={formatoValor}
+                                            onChange={(e) => setFormatoValor(e.target.value)}
+                                            className="h-11 w-full appearance-none rounded-xl border border-[#e1e5ee] bg-[#fafbfe] px-3 pr-10 text-sm text-[#263654] outline-none focus:border-[#8b73f7]"
+                                        >
+                                            <option value="1234,56">1234,56</option>
+                                            <option value="1.234,56">1.234,56</option>
+                                            <option value="1234.56">1234.56</option>
+                                            <option value="1,234.56">1,234.56</option>
+                                        </select>
 
-                            <p className="mt-2 text-sm leading-5 text-[#7b857f]">
-                                Essas configurações servem apenas para padronizar a leitura
-                                dos dados.
-                            </p>
-                        </div>
+                                        <ChevronDown
+                                            size={16}
+                                            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#8995ae]"
+                                        />
+                                    </div>
+                                </div>
 
-                        {ehCsv && (
-                            <div className="mt-7">
-                                <label className="text-xs font-semibold text-[#526159]">
-                                    Separador das colunas
-                                </label>
 
-                                <div className="relative mt-2">
-                                    <select
-                                        value={separador}
-                                        onChange={(event) =>
-                                            atualizarSeparador(event.target.value)
+                                <div className="mt-6 overflow-hidden rounded-2xl border border-[#e6e0ff] bg-[#f7f4ff]">
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setAvisoAberto((aberto) => !aberto)
                                         }
-                                        className="h-11 w-full appearance-none rounded-xl border border-[#dfe3dc] bg-[#fafaf6] px-3 pr-10 text-sm text-[#10231c] outline-none transition focus:border-[#9aae35]"
+                                        aria-expanded={avisoAberto}
+                                        className="flex w-full items-center justify-between gap-3 p-4 text-left transition hover:bg-[#f0ecff]"
                                     >
-                                        <option value=",">Vírgula (,)</option>
-                                        <option value=";">Ponto e vírgula (;)</option>
-                                        <option value={'\t'}>Tabulação</option>
-                                        <option value="|">Barra vertical (|)</option>
-                                    </select>
+                                        <div className="flex min-w-0 items-center gap-2">
+                                            <CheckCircle2
+                                                size={18}
+                                                className="shrink-0 text-[#7653f5]"
+                                            />
 
-                                    <ChevronDown
-                                        size={16}
-                                        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#7d8983]"
-                                    />
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-bold text-[#4935a8]">
+                                                    Atenção: como preencher os valores da planilha
+                                                </p>
+
+                                                <p className="mt-1 text-xs leading-5 text-[#65718b]">
+                                                    Clique para entender como identificar entradas e
+                                                    saídas.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <ChevronDown
+                                            size={18}
+                                            className={`shrink-0 text-[#7653f5] transition-transform duration-200 ${avisoAberto ? 'rotate-180' : ''
+                                                }`}
+                                        />
+                                    </button>
+
+                                    {avisoAberto && (
+                                        <div className="border-t border-[#e6e0ff] px-4 pb-4 pt-3">
+                                            <p className="text-xs leading-5 text-[#65718b]">
+                                                A identificação das movimentações funciona de acordo
+                                                com o sinal do valor:
+                                            </p>
+
+                                            <div className="mt-3 rounded-xl border border-[#e6e0ff] bg-white p-3">
+                                                <p className="text-xs font-bold text-[#263654]">
+                                                    Valor positivo (ex.: R$ 200,00)
+                                                </p>
+
+                                                <p className="mt-1 text-xs leading-5 text-[#65718b]">
+                                                    Representa um valor a pagar posteriormente, como
+                                                    uma compra realizada no cartão de crédito.
+                                                </p>
+                                            </div>
+
+                                            <div className="mt-3 rounded-xl border border-[#e6e0ff] bg-white p-3">
+                                                <p className="text-xs font-bold text-[#263654]">
+                                                    Valor negativo (ex.: -R$ 200,00)
+                                                </p>
+
+                                                <p className="mt-1 text-xs leading-5 text-[#65718b]">
+                                                    Representa uma entrada de dinheiro já recebida,
+                                                    como um Pix recebido, salário ou transferência
+                                                    recebida.
+                                                </p>
+                                            </div>
+
+                                            <div className="mt-3 border-t border-[#e6e0ff] pt-3">
+                                                <p className="text-xs font-bold text-[#4935a8]">
+                                                    Importante
+                                                </p>
+
+                                                <p className="mt-1 text-xs leading-5 text-[#65718b]">
+                                                    Utilize o sinal negativo somente para identificar
+                                                    valores que já entraram na sua conta. Não remova o
+                                                    sinal dos valores negativos, pois ele é utilizado
+                                                    pelo sistema para identificar as entradas.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-                        )}
-
-                        <div className="mt-6">
-                            <label className="text-xs font-semibold text-[#526159]">
-                                Formato das datas
-                            </label>
-
-                            <div className="relative mt-2">
-                                <select
-                                    value={formatoData}
-                                    onChange={(event) => setFormatoData(event.target.value)}
-                                    className="h-11 w-full appearance-none rounded-xl border border-[#dfe3dc] bg-[#fafaf6] px-3 pr-10 text-sm text-[#10231c] outline-none transition focus:border-[#9aae35]"
-                                >
-                                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                                    <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                                </select>
-
-                                <ChevronDown
-                                    size={16}
-                                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#7d8983]"
-                                />
-                            </div>
+                            </aside>
                         </div>
 
-                        <div className="mt-6">
-                            <label className="text-xs font-semibold text-[#526159]">
-                                Formato dos valores
-                            </label>
 
-                            <div className="relative mt-2">
-                                <select
-                                    value={formatoValor}
-                                    onChange={(event) => setFormatoValor(event.target.value)}
-                                    className="h-11 w-full appearance-none rounded-xl border border-[#dfe3dc] bg-[#fafaf6] px-3 pr-10 text-sm text-[#10231c] outline-none transition focus:border-[#9aae35]"
-                                >
-                                    <option value="1234,56">1234,56</option>
-                                    <option value="1.234,56">1.234,56</option>
-                                    <option value="1234.56">1234.56</option>
-                                    <option value="1,234.56">1,234.56</option>
-                                </select>
+                        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                            <button
+                                type="button"
+                                onClick={() => navigate('/conexoes/planilha')}
+                                className="h-11 rounded-xl border border-[#e1e5ee] bg-white px-5 text-sm font-semibold text-[#52617d] transition hover:bg-[#f8f9fc]"
+                            >
+                                Voltar
+                            </button>
 
-                                <ChevronDown
-                                    size={16}
-                                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#7d8983]"
-                                />
-                            </div>
+                            <button
+                                type="button"
+                                onClick={continuar}
+                                disabled={
+                                    carregando || !!erro || dados.length === 0
+                                }
+                                className="h-11 rounded-xl bg-[#7653f5] px-6 text-sm font-semibold text-white shadow-[0_5px_14px_rgba(118,83,245,0.2)] transition hover:bg-[#6845e8] disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                                Continuar
+                            </button>
                         </div>
-
-                        <div className="mt-7 rounded-2xl bg-[#eef7d2] p-4">
-                            <div className="flex items-start gap-3">
-                                <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#9aae35] text-white">
-                                    <Check size={12} />
-                                </div>
-
-                                <div>
-                                    <p className="text-xs font-semibold text-[#40502f]">
-                                        Seus dados serão padronizados
-                                    </p>
-
-                                    <p className="mt-1 text-xs leading-5 text-[#68736d]">
-                                        Os valores serão convertidos para o formato numérico
-                                        esperado pelo Finly.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </aside>
-                </div>
-
-                <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                    <button
-                        type="button"
-                        onClick={() => navigate('/conexoes/planilha')}
-                        className="h-11 rounded-xl border border-[#dfe3dc] bg-white px-5 text-sm font-medium text-[#526159] transition hover:bg-[#f5f6f1]"
-                    >
-                        Voltar
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={continuar}
-                        disabled={carregando || !!erro || dados.length === 0}
-                        className="h-11 rounded-xl bg-[#10231c] px-6 text-sm font-semibold text-white transition hover:bg-[#19372c] disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                        Continuar
-                    </button>
-                </div>
-            </main>
-        </div>
+                    </div>
+            </div>
+        </MainLayout>
     )
 }
 

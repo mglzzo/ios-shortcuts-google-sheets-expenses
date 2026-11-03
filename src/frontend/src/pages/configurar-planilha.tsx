@@ -1,13 +1,12 @@
 import {
-  ArrowLeft,
   Check,
   ChevronRight,
   CircleHelp,
-  FileSpreadsheet,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import * as XLSX from 'xlsx'
+import MainLayout from '../../components/layout/MainLayout'
 
 interface Coluna {
   letra: string
@@ -43,81 +42,81 @@ const campos: Campo[] = [
     titulo: 'Valor',
     descricao: 'O valor da transação.',
     obrigatorio: true,
-    cor: '#9aae35',
-    fundo: '#f4f8dc',
-    borda: '#cfdc8a',
+    cor: '#7653f5',
+    fundo: '#f0edff',
+    borda: '#d8d0ff',
   },
   {
     id: 'data',
     titulo: 'Data',
     descricao: 'A data em que o gasto aconteceu.',
     obrigatorio: true,
-    cor: '#6f8f82',
-    fundo: '#edf3ef',
-    borda: '#b9cbc2',
+    cor: '#7653f5',
+    fundo: '#f0edff',
+    borda: '#d8d0ff',
   },
   {
     id: 'estabelecimento',
     titulo: 'Estabelecimento',
     descricao: 'O local ou nome do estabelecimento onde você gastou.',
     obrigatorio: true,
-    cor: '#19a657',
-    fundo: '#edf8f0',
-    borda: '#a8d5b8',
+    cor: '#7653f5',
+    fundo: '#f0edff',
+    borda: '#d8d0ff',
   },
   {
     id: 'metodo_pagamento',
     titulo: 'Método de pagamento',
     descricao: 'Escolha uma coluna da planilha ou defina um método para todas as transações.',
     obrigatorio: true,
-    cor: '#8a8063',
-    fundo: '#f5f3ea',
-    borda: '#d6d0b8',
+    cor: '#7653f5',
+    fundo: '#f0edff',
+    borda: '#d8d0ff',
   },
   {
     id: 'categoria',
     titulo: 'Categoria',
     descricao: 'A categoria associada ao gasto.',
     obrigatorio: false,
-    cor: '#7f8d55',
-    fundo: '#f1f4e5',
-    borda: '#c8d29f',
+    cor: '#7653f5',
+    fundo: '#f0edff',
+    borda: '#d8d0ff',
   },
   {
     id: 'subcategoria',
     titulo: 'Subcategoria',
     descricao: 'Uma classificação mais específica do gasto.',
     obrigatorio: false,
-    cor: '#71847b',
-    fundo: '#eef2ef',
-    borda: '#c2cec7',
+    cor: '#7653f5',
+    fundo: '#f0edff',
+    borda: '#d8d0ff',
   },
   {
     id: 'parcela_atual',
     titulo: 'Parcela atual',
     descricao: 'O número da parcela atual.',
     obrigatorio: false,
-    cor: '#527b70',
-    fundo: '#edf4f1',
-    borda: '#b4cbc2',
+    cor: '#7653f5',
+    fundo: '#f0edff',
+    borda: '#d8d0ff',
   },
   {
     id: 'parcela_total',
     titulo: 'Total de parcelas',
     descricao: 'A quantidade total de parcelas.',
     obrigatorio: false,
-    cor: '#667b72',
-    fundo: '#eef2ef',
-    borda: '#bcc8c2',
+    cor: '#7653f5',
+    fundo: '#f0edff',
+    borda: '#d8d0ff',
   },
   {
     id: 'observacao',
     titulo: 'Observação',
     descricao: 'Uma informação adicional sobre a transação.',
     obrigatorio: false,
-    cor: '#68736d',
-    fundo: '#f2f3f0',
-    borda: '#d2d6d1',
+    cor: '#7653f5',
+    fundo: '#f0edff',
+    borda: '#d8d0ff',
   },
 ]
 
@@ -453,32 +452,22 @@ function ConfigurarPlanilha() {
       : undefined
 
   return (
-    <div className="min-h-screen bg-[#f7f7f0] text-[#10231c]">
-      <main className="mx-auto max-w-[1450px] px-5 py-7 sm:px-8 lg:px-10">
-        <button
-          type="button"
-          onClick={voltarParaPlanilha}
-          className="mb-7 flex items-center gap-2 text-sm text-[#68736d] transition hover:text-[#10231c]"
-        >
-          <ArrowLeft size={16} />
-          Voltar para a preparação
-        </button>
+    <MainLayout>
+      <div className="min-h-screen bg-[#f5f6fb] text-[#17213b]">
+        <main className="w-full max-w-none px-5 pb-8 pt-7 sm:px-10 lg:px-12">
+  
 
-        <div className="mb-7 flex items-start gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#d8ff3e] text-[#10231c]">
-            <FileSpreadsheet size={21} />
-          </div>
+        <div className="mb-8 flex items-start gap-4">
+
 
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7d8983]">
-              Conexões · Planilha
-            </p>
 
-            <h1 className="mt-1 text-[30px] font-normal tracking-[-0.04em] sm:text-[38px]">
+
+            <h1 className="mt-1 text-[40px] font-extrabold leading-tight tracking-[-.7px] sm:text-[44px]">
               Vamos configurar sua planilha
             </h1>
 
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#68736d]">
+            <p className="mt-2 max-w-3xl text-[16px] leading-6 text-[#77839e] sm:text-[18px]">
               Clique na coluna correspondente a cada informação. Você não
               precisa alterar sua planilha.
             </p>
@@ -486,8 +475,8 @@ function ConfigurarPlanilha() {
         </div>
 
         {carregando && (
-          <div className="rounded-[24px] border border-[#dfe3dc] bg-white p-10 text-center">
-            <p className="text-sm text-[#68736d]">
+          <div className="rounded-[24px] border border-[#e6e8f0] bg-white p-10 text-center">
+            <p className="text-sm text-[#77839e]">
               Lendo sua planilha...
             </p>
           </div>
@@ -499,14 +488,14 @@ function ConfigurarPlanilha() {
               Não foi possível abrir a planilha
             </p>
 
-            <p className="mt-2 text-sm text-[#68736d]">
+            <p className="mt-2 text-sm text-[#77839e]">
               {erro}
             </p>
 
             <button
               type="button"
               onClick={() => navigate('/conexoes/planilha')}
-              className="mt-5 rounded-xl bg-[#10231c] px-5 py-3 text-sm font-semibold text-white"
+              className="mt-5 rounded-xl bg-[#17213b] px-5 py-3 text-sm font-semibold text-white"
             >
               Escolher outra planilha
             </button>
@@ -515,10 +504,10 @@ function ConfigurarPlanilha() {
 
         {!carregando && !erro && (
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
-            <section className="min-w-0 rounded-[24px] border border-[#dfe3dc] bg-white p-4 sm:p-5">
+            <section className="min-w-0 rounded-[24px] border border-[#e6e8f0] bg-white p-4 sm:p-5">
               <div className="mb-4 flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7d8983]">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8994aa]">
                     Visualização da sua planilha:
                   </p>
 
@@ -527,17 +516,17 @@ function ConfigurarPlanilha() {
                   </p>
                 </div>
 
-                <div className="hidden items-center gap-2 text-xs text-[#7d8983] sm:flex">
+                <div className="hidden items-center gap-2 text-xs text-[#8994aa] sm:flex">
                   <CircleHelp size={14} />
                   Clique em uma coluna para selecioná-la
                 </div>
               </div>
 
-              <div className="w-fit max-w-full overflow-hidden rounded-xl border border-[#cfd4ce]">
+              <div className="w-fit max-w-full overflow-hidden rounded-xl border border-[#e6e8f0]">
                 <div className="max-h-[620px] max-w-full overflow-auto">
                   <div className="w-fit min-w-max">
-                    <div className="sticky top-0 z-20 flex w-fit border-b border-[#cfd4ce] bg-[#f3f4f1]">
-                      <div className="sticky left-0 z-30 flex h-8 w-10 shrink-0 items-center justify-center border-r border-[#cfd4ce] bg-[#f3f4f1] text-[10px] text-[#7d8983]" />
+                    <div className="sticky top-0 z-20 flex w-fit border-b border-[#e6e8f0] bg-[#f8f9fc]">
+                      <div className="sticky left-0 z-30 flex h-8 w-10 shrink-0 items-center justify-center border-r border-[#e6e8f0] bg-[#f8f9fc] text-[10px] text-[#8994aa]" />
 
                       {colunas.map((coluna) => {
                         const campoSelecionado = campos.find(
@@ -562,19 +551,19 @@ function ConfigurarPlanilha() {
                                 coluna.letra,
                               )
                             }
-                            className={`relative flex h-8 w-[150px] shrink-0 items-center justify-center border-r border-[#cfd4ce] text-[11px] font-medium transition ${
+                            className={`relative flex h-8 w-[150px] shrink-0 items-center justify-center border-r border-[#e6e8f0] text-[11px] font-medium transition ${
                               campoSelecionado
-                                ? 'text-[#10231c]'
+                                ? 'text-[#17213b]'
                                 : podeSelecionar
-                                  ? 'cursor-pointer bg-white text-[#526159] hover:bg-[#d8ff3e]'
-                                  : 'text-[#7d8983]'
+                                  ? 'cursor-pointer bg-white text-[#53617b] hover:bg-[#7653f5]'
+                                  : 'text-[#8994aa]'
                             }`}
                             style={
                               campoSelecionado
                                 ? {
-                                    backgroundColor: '#eef7d2',
+                                    backgroundColor: '#eee9ff',
                                     boxShadow:
-                                      'inset 0 0 0 1px #b8d52e',
+                                      'inset 0 0 0 1px #7653f5',
                                   }
                                 : undefined
                             }
@@ -582,7 +571,7 @@ function ConfigurarPlanilha() {
                             {coluna.letra}
 
                             {campoSelecionado && (
-                              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white/90 text-[#10231c]">
+                              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white/90 text-[#17213b]">
                                 <Check size={10} />
                               </span>
                             )}
@@ -594,9 +583,9 @@ function ConfigurarPlanilha() {
                     {linhas.map((linha, indiceLinha) => (
                       <div
                         key={indiceLinha}
-                        className="flex border-b border-[#e2e5e0] last:border-b-0"
+                        className="flex border-b border-[#e6e8f0] last:border-b-0"
                       >
-                        <div className="sticky left-0 z-10 flex h-11 w-10 shrink-0 items-center justify-center border-r border-[#cfd4ce] bg-[#f7f8f5] text-[10px] text-[#8a958f]">
+                        <div className="sticky left-0 z-10 flex h-11 w-10 shrink-0 items-center justify-center border-r border-[#e6e8f0] bg-[#f8f9fc] text-[10px] text-[#9aa5b8]">
                           {indiceLinha + 1}
                         </div>
 
@@ -622,22 +611,22 @@ function ConfigurarPlanilha() {
                                   coluna.letra,
                                 )
                               }
-                              className={`flex h-11 w-[150px] shrink-0 items-center overflow-hidden border-r border-[#e2e5e0] px-3 text-left text-xs transition ${
+                              className={`flex h-11 w-[150px] shrink-0 items-center overflow-hidden border-r border-[#e6e8f0] px-3 text-left text-xs transition ${
                                 campoSelecionado
-                                  ? 'font-medium text-[#10231c]'
+                                  ? 'font-medium text-[#17213b]'
                                   : selecionando &&
                                       !colunaSelecionadaPorOutroCampo(
                                         coluna.letra,
                                       )
-                                    ? 'cursor-pointer hover:bg-[#f5fbdc]'
+                                    ? 'cursor-pointer hover:bg-[#f0edff]'
                                     : ''
                               }`}
                               style={
                                 campoSelecionado
                                   ? {
-                                      backgroundColor: '#eef7d2',
+                                      backgroundColor: '#eee9ff',
                                       boxShadow:
-                                        'inset 0 0 0 1px #b8d52e',
+                                        'inset 0 0 0 1px #7653f5',
                                     }
                                   : undefined
                               }
@@ -654,13 +643,13 @@ function ConfigurarPlanilha() {
                 </div>
               </div>
 
-              <p className="mt-3 text-[11px] text-[#8a958f]">
+              <p className="mt-3 text-[11px] text-[#9aa5b8]">
                 Mostrando {Math.max(linhas.length - 1, 0)} linhas da sua
                 planilha.
               </p>
             </section>
 
-            <aside className="h-fit rounded-[24px] border border-[#dfe3dc] bg-white p-5 sm:p-6 xl:sticky xl:top-5">
+            <aside className="h-fit rounded-[24px] border border-[#e6e8f0] bg-white p-5 sm:p-6 xl:sticky xl:top-5">
               <div
                 className="rounded-2xl p-5 transition-all"
                 style={{
@@ -692,7 +681,7 @@ function ConfigurarPlanilha() {
                   </div>
                 </div>
 
-                <p className="mt-4 text-sm leading-6 text-[#526159]">
+                <p className="mt-4 text-sm leading-6 text-[#53617b]">
                   {campo.descricao}
                 </p>
 
@@ -705,10 +694,10 @@ function ConfigurarPlanilha() {
                           setConfiguracaoPagamento(null)
                           setSelecionando(true)
                         }}
-                        className="flex w-full cursor-pointer items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-semibold text-white transition-colors duration-200 hover:border-[#756b52] hover:bg-[#756b52] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8a8063] focus-visible:ring-offset-2"
+                        className="flex w-full cursor-pointer items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-semibold text-white transition-colors duration-200 hover:border-[#6543e8] hover:bg-[#6543e8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7653f5] focus-visible:ring-offset-2"
                         style={{
-                          borderColor: '#8a8063',
-                          backgroundColor: '#8a8063',
+                          borderColor: '#7653f5',
+                          backgroundColor: '#7653f5',
                         }}
                       >
                         <span>Usar uma coluna da planilha</span>
@@ -731,32 +720,32 @@ function ConfigurarPlanilha() {
                         }}
                         className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition ${
                           configuracaoPagamento?.tipo === 'fixo'
-                            ? 'font-semibold text-[#10231c]'
-                            : 'bg-white text-[#526159]'
+                            ? 'font-semibold text-[#17213b]'
+                            : 'bg-white text-[#53617b]'
                         }`}
                         style={{
                           borderColor:
                             configuracaoPagamento?.tipo === 'fixo'
-                              ? '#8a8063'
-                              : '#d8cfb3',
+                              ? '#7653f5'
+                              : '#d8d0ff',
                           backgroundColor:
                             configuracaoPagamento?.tipo === 'fixo'
-                              ? '#8a8063'
+                              ? '#7653f5'
                               : '#ffffff',
                           color:
                             configuracaoPagamento?.tipo === 'fixo'
                               ? '#ffffff'
-                              : '#526159',
+                              : '#53617b',
                         }}
                         onMouseEnter={(event) => {
                           if (configuracaoPagamento?.tipo !== 'fixo') {
-                            event.currentTarget.style.borderColor = '#8a8063'
-                            event.currentTarget.style.backgroundColor = '#f3f0e5'
+                            event.currentTarget.style.borderColor = '#7653f5'
+                            event.currentTarget.style.backgroundColor = '#f0edff'
                           }
                         }}
                         onMouseLeave={(event) => {
                           if (configuracaoPagamento?.tipo !== 'fixo') {
-                            event.currentTarget.style.borderColor = '#d8cfb3'
+                            event.currentTarget.style.borderColor = '#d8d0ff'
                             event.currentTarget.style.backgroundColor = '#ffffff'
                           }
                         }}
@@ -786,23 +775,23 @@ function ConfigurarPlanilha() {
                               }
                               className={`rounded-xl border px-3 py-3 text-xs font-medium transition ${
                                 selecionado
-                                  ? 'text-[#10231c]'
-                                  : 'text-[#526159]'
+                                  ? 'text-[#17213b]'
+                                  : 'text-[#53617b]'
                               }`}
                               style={{
-                                borderColor: selecionado ? '#9aae35' : '#cfdc8a',
-                                backgroundColor: selecionado ? '#d8ff3e' : '#f8faed',
+                                borderColor: selecionado ? '#7653f5' : '#d8d0ff',
+                                backgroundColor: selecionado ? '#7653f5' : '#f0edff',
                               }}
                               onMouseEnter={(event) => {
                                 if (!selecionado) {
-                                  event.currentTarget.style.borderColor = '#9aae35'
-                                  event.currentTarget.style.backgroundColor = '#eaf4c5'
+                                  event.currentTarget.style.borderColor = '#7653f5'
+                                  event.currentTarget.style.backgroundColor = '#eee9ff'
                                 }
                               }}
                               onMouseLeave={(event) => {
                                 if (!selecionado) {
-                                  event.currentTarget.style.borderColor = '#cfdc8a'
-                                  event.currentTarget.style.backgroundColor = '#f8faed'
+                                  event.currentTarget.style.borderColor = '#d8d0ff'
+                                  event.currentTarget.style.backgroundColor = '#f0edff'
                                 }
                               }}
                             >
@@ -812,11 +801,11 @@ function ConfigurarPlanilha() {
                         })}
                       </div>
                     ) : configuracaoPagamento?.tipo === 'coluna' ? (
-                      <div className="mt-4 rounded-xl bg-white/80 px-4 py-3 text-center text-xs font-semibold text-[#8a8063]">
+                      <div className="mt-4 rounded-xl bg-white/80 px-4 py-3 text-center text-xs font-semibold text-[#7653f5]">
                         Clique na coluna da planilha
                       </div>
                     ) : (
-                      <div className="mt-4 rounded-xl bg-white/70 px-4 py-3 text-xs leading-5 text-[#68736d]">
+                      <div className="mt-4 rounded-xl bg-white/70 px-4 py-3 text-xs leading-5 text-[#77839e]">
                         Se sua planilha não possui uma coluna com o
                         método de pagamento, você pode escolher um
                         método fixo para todas as transações.
@@ -825,11 +814,11 @@ function ConfigurarPlanilha() {
 
                     {configuracaoPagamento && (
                       <div className="mt-3 flex items-center justify-between rounded-xl bg-white/70 px-4 py-3">
-                        <span className="text-xs text-[#68736d]">
+                        <span className="text-xs text-[#77839e]">
                           Configuração
                         </span>
 
-                        <span className="text-sm font-bold text-[#8a8063]">
+                        <span className="text-sm font-bold text-[#7653f5]">
                           {colunaMetodoPagamento ||
                             metodosPagamento.find(
                               (item) =>
@@ -843,7 +832,7 @@ function ConfigurarPlanilha() {
                       <button
                         type="button"
                         onClick={alterarMetodoPagamento}
-                        className="mt-3 w-full rounded-xl px-4 py-2.5 text-xs font-medium text-[#68736d] transition hover:bg-white/70 hover:text-[#10231c]"
+                        className="mt-3 w-full rounded-xl px-4 py-2.5 text-xs font-medium text-[#77839e] transition hover:bg-white/70 hover:text-[#17213b]"
                       >
                         Alterar método de pagamento
                       </button>
@@ -877,7 +866,7 @@ function ConfigurarPlanilha() {
                 {!campoMetodoPagamento &&
                   mapeamento[campo.id] && (
                     <div className="mt-3 flex items-center justify-between rounded-xl bg-white/70 px-4 py-3">
-                      <span className="text-xs text-[#68736d]">
+                      <span className="text-xs text-[#77839e]">
                         Coluna selecionada
                       </span>
 
@@ -894,7 +883,7 @@ function ConfigurarPlanilha() {
                   <button
                     type="button"
                     onClick={pularCampoOpcional}
-                    className="mt-3 w-full rounded-xl px-4 py-2.5 text-xs font-medium text-[#68736d] transition hover:bg-white/70 hover:text-[#10231c]"
+                    className="mt-3 w-full rounded-xl px-4 py-2.5 text-xs font-medium text-[#77839e] transition hover:bg-white/70 hover:text-[#17213b]"
                   >
                     Não tenho esta informação
                   </button>
@@ -902,13 +891,13 @@ function ConfigurarPlanilha() {
               </div>
 
               <div className="mt-5">
-                <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7d8983]">
+                <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8994aa]">
                   Progresso
                 </p>
 
-                <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-[#edf0ea]">
+                <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-[#eef0f6]">
                   <div
-                    className="h-full rounded-full bg-[#9aae35] transition-all"
+                    className="h-full rounded-full bg-[#7653f5] transition-all"
                     style={{ width: `${progresso}%` }}
                   />
                 </div>
@@ -929,8 +918,8 @@ function ConfigurarPlanilha() {
                         onClick={() => selecionarCampo(indice)}
                         className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${
                           atual
-                            ? 'bg-[#f5f6f2]'
-                            : 'hover:bg-[#f7f8f4]'
+                            ? 'bg-[#f0edff]'
+                            : 'hover:bg-[#f5f6fb]'
                         }`}
                       >
                         <div
@@ -940,12 +929,12 @@ function ConfigurarPlanilha() {
                               ? item.cor
                               : atual
                                 ? item.fundo
-                                : '#eef0eb',
+                                : '#eef0f6',
                             color: concluido
                               ? '#ffffff'
                               : atual
                                 ? item.cor
-                                : '#8a958f',
+                                : '#9aa5b8',
                             border: atual
                               ? `1px solid ${item.borda}`
                               : 'none',
@@ -961,15 +950,15 @@ function ConfigurarPlanilha() {
                         <span
                           className={`text-xs ${
                             atual
-                              ? 'font-semibold text-[#10231c]'
-                              : 'text-[#68736d]'
+                              ? 'font-semibold text-[#17213b]'
+                              : 'text-[#77839e]'
                           }`}
                         >
                           {item.titulo}
                         </span>
 
                         {!item.obrigatorio && (
-                          <span className="ml-auto text-[9px] text-[#9aa29d]">
+                          <span className="ml-auto text-[9px] text-[#9aa5b8]">
                             opcional
                           </span>
                         )}
@@ -984,7 +973,7 @@ function ConfigurarPlanilha() {
                   <button
                     type="button"
                     onClick={continuar}
-                    className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#10231c] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#18372b]"
+                    className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#17213b] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#6543e8]"
                   >
                     Ver prévia
                     <ChevronRight size={16} />
@@ -993,7 +982,7 @@ function ConfigurarPlanilha() {
 
               {!camposObrigatoriosConcluidos &&
                 campoAtual >= obrigatorios.length && (
-                  <div className="mt-5 rounded-xl bg-[#f7f7f0] px-4 py-3 text-xs leading-5 text-[#68736d]">
+                  <div className="mt-5 rounded-xl bg-[#f5f6fb] px-4 py-3 text-xs leading-5 text-[#77839e]">
                     Primeiro vamos terminar os campos obrigatórios.
                     Depois você poderá configurar os opcionais.
                   </div>
@@ -1002,7 +991,8 @@ function ConfigurarPlanilha() {
           </div>
         )}
       </main>
-    </div>
+      </div>
+    </MainLayout>
   )
 }
 

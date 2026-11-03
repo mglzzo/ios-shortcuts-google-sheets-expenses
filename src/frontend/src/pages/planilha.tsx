@@ -1,12 +1,13 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft,
   CheckCircle2,
   FileSpreadsheet,
   Upload,
   X,
 } from 'lucide-react'
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+
+import MainLayout from '../../components/layout/MainLayout'
 
 function Planilha() {
   const navigate = useNavigate()
@@ -23,9 +24,7 @@ function Planilha() {
   const textoTipo = tipoImportacao === 'entrada' ? 'entradas' : 'saídas'
 
   function selecionarArquivo(file: File | undefined) {
-    if (!file) {
-      return
-    }
+    if (!file) return
 
     const extensoesPermitidas = ['.xlsx', '.xls', '.csv']
     const extensao = `.${file.name.split('.').pop()?.toLowerCase()}`
@@ -50,7 +49,6 @@ function Planilha() {
       return
     }
 
-    // Releitura no clique para garantir que usamos a opção escolhida em Conexões.
     const tipoAtual =
       sessionStorage.getItem('finly-tipo-importacao-planilha') === 'entrada'
         ? 'entrada'
@@ -65,122 +63,129 @@ function Planilha() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f7f0] text-[#10231c]">
-      <main className="mx-auto max-w-[1000px] px-5 py-6 sm:px-8 lg:px-11 lg:py-9">
-        <button
-          type="button"
-          onClick={() => navigate('/conexoes')}
-          className="mb-8 flex items-center gap-2 text-sm text-[#68736d] transition hover:text-[#10231c]"
-        >
-          <ArrowLeft size={17} />
-          Voltar para conexões
-        </button>
+    <MainLayout>
+      <div className="min-h-screen bg-[#f5f6fb] text-[#17213b]">
+        <div className="w-full space-y-6 px-5 py-7 sm:px-8 sm:py-9 lg:px-11">
 
-        <div className="max-w-2xl">
-          <h1 className="mt-2 text-[34px] font-normal tracking-[-0.04em] text-[#10231c] sm:text-[42px]">
-            Conecte sua planilha de {textoTipo}
-          </h1>
+          <div className="max-w-4xl">
 
-          <p className="mt-3 text-sm leading-6 text-[#68736d]">
-            Envie sua planilha de {tipoImportacao === 'entrada' ? 'recebimentos' : 'gastos'}. Depois, vamos pedir algumas
-            informações para entender exatamente onde cada dado está.
-          </p>
-        </div>
+            <h1 className="text-[32px] font-extrabold leading-tight tracking-[-.7px] text-[#17213b] sm:text-[40px]">
+              Conecte sua planilha de {textoTipo}
+            </h1>
 
-        <section className="mt-8 max-w-3xl rounded-[24px] border border-[#dfe3dc] bg-white p-5 sm:p-7">
-          {!arquivo ? (
-            <label
-              onDragOver={(event) => {
-                event.preventDefault()
-                setArrastando(true)
-              }}
-              onDragLeave={() => setArrastando(false)}
-              onDrop={(event) => {
-                event.preventDefault()
-                setArrastando(false)
-                selecionarArquivo(event.dataTransfer.files[0])
-              }}
-              className={`flex min-h-[300px] cursor-pointer flex-col items-center justify-center rounded-[18px] border border-dashed px-6 text-center transition ${
-                arrastando
-                  ? 'border-[#9dbb24] bg-[#f5fbdc]'
-                  : 'border-[#cfd5cd] bg-[#fafaf6] hover:border-[#aeb8ae] hover:bg-[#f7f8f2]'
-              }`}
-            >
-              <input
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                className="hidden"
-                onChange={(event) => selecionarArquivo(event.target.files?.[0])}
-              />
-
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#d8ff3e] text-[#10231c]">
-                <FileSpreadsheet size={25} />
-              </div>
-
-              <h2 className="mt-5 text-base font-semibold">Arraste sua planilha aqui</h2>
-
-              <p className="mt-2 text-sm text-[#7b857f]">
-                ou clique para selecionar um arquivo
-              </p>
-
-              <span className="mt-5 text-[11px] text-[#9aa39e]">
-                Excel (.xlsx, .xls) ou CSV
-              </span>
-            </label>
-          ) : (
-            <div className="rounded-[18px] border border-[#dfe3dc] bg-[#fafaf6] p-5">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#d8ff3e] text-[#10231c]">
-                  <FileSpreadsheet size={21} />
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{arquivo.name}</p>
-                  <p className="mt-1 text-xs text-[#8a958f]">
-                    {(arquivo.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={removerArquivo}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#8a958f] transition hover:bg-[#eef0eb] hover:text-[#10231c]"
-                  aria-label="Remover arquivo"
-                >
-                  <X size={17} />
-                </button>
-              </div>
-
-              <div className="mt-5 flex items-center gap-2 rounded-xl bg-[#eef7d2] px-4 py-3 text-xs text-[#526159]">
-                <CheckCircle2 size={15} />
-                Arquivo pronto para ser analisado.
-              </div>
-            </div>
-          )}
-
-          {erro && <p className="mt-4 text-sm text-[#b75b4a]">{erro}</p>}
-
-          <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <button
-              type="button"
-              onClick={() => navigate('/conexoes')}
-              className="h-11 rounded-xl border border-[#dfe3dc] bg-white px-5 text-sm font-medium text-[#526159] transition hover:bg-[#f5f6f1]"
-            >
-              Cancelar
-            </button>
-
-            <button
-              type="button"
-              onClick={continuar}
-              className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#10231c] px-5 text-sm font-semibold text-white transition hover:bg-[#19372c]"
-            >
-              <Upload size={16} />
-              Continuar
-            </button>
+            <p className="mt-2 max-w-2xl text-[15px] leading-6 text-[#77839e] sm:text-[17px]">
+              Envie sua planilha de{' '}
+              {tipoImportacao === 'entrada' ? 'recebimentos' : 'gastos'}.
+              Depois, vamos pedir algumas informações para entender exatamente
+              onde cada dado está.
+            </p>
           </div>
-        </section>
-      </main>
-    </div>
+
+          <section className="mx-auto w-full max-w-[820px] rounded-[22px] border border-[#e6e8f0] bg-white p-5 shadow-[0_2px_8px_rgba(34,45,80,.025)] sm:p-7">
+
+            {!arquivo ? (
+              <label
+                onDragOver={(event) => {
+                  event.preventDefault()
+                  setArrastando(true)
+                }}
+                onDragLeave={() => setArrastando(false)}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  setArrastando(false)
+                  selecionarArquivo(event.dataTransfer.files[0])
+                }}
+                className={`flex min-h-[260px] cursor-pointer flex-col items-center justify-center rounded-[18px] border border-dashed px-6 text-center transition sm:min-h-[300px] ${
+                  arrastando
+                    ? 'border-[#7653f5] bg-[#f3f0ff]'
+                    : 'border-[#d7dbe7] bg-[#fafaff] hover:border-[#b7a8f8] hover:bg-[#f7f5ff]'
+                }`}
+              >
+                <input
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  className="hidden"
+                  onChange={(event) =>
+                    selecionarArquivo(event.target.files?.[0])
+                  }
+                />
+
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f0eaff] text-[#7653f5]">
+                  <FileSpreadsheet size={25} />
+                </div>
+
+                <h2 className="mt-5 text-base font-semibold text-[#17213b]">
+                  Arraste sua planilha aqui
+                </h2>
+
+                <p className="mt-2 text-sm text-[#77839e]">
+                  ou clique para selecionar um arquivo
+                </p>
+
+                <span className="mt-5 text-[11px] text-[#9aa5b8]">
+                  Excel (.xlsx, .xls) ou CSV
+                </span>
+              </label>
+            ) : (
+              <div className="rounded-[18px] border border-[#e6e8f0] bg-[#fafaff] p-5">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f0eaff] text-[#7653f5]">
+                    <FileSpreadsheet size={21} />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-[#17213b]">
+                      {arquivo.name}
+                    </p>
+
+                    <p className="mt-1 text-xs text-[#8b96ac]">
+                      {(arquivo.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={removerArquivo}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#8b96ac] transition hover:bg-[#eeeaf9] hover:text-[#17213b]"
+                    aria-label="Remover arquivo"
+                  >
+                    <X size={17} />
+                  </button>
+                </div>
+
+                <div className="mt-5 flex items-center gap-2 rounded-xl bg-[#effaf5] px-4 py-3 text-xs text-[#39765d]">
+                  <CheckCircle2 size={15} />
+                  Arquivo pronto para ser analisado.
+                </div>
+              </div>
+            )}
+
+            {erro && (
+              <p className="mt-4 text-sm text-[#c45151]">{erro}</p>
+            )}
+
+            <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => navigate('/conexoes')}
+                className="h-11 rounded-xl border border-[#e2e5ee] bg-white px-5 text-sm font-medium text-[#52607b] transition hover:bg-[#f7f8fc]"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={continuar}
+                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#7653f5] px-5 text-sm font-semibold text-white transition hover:bg-[#6543e8]"
+              >
+                <Upload size={16} />
+                Continuar
+              </button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </MainLayout>
   )
 }
 

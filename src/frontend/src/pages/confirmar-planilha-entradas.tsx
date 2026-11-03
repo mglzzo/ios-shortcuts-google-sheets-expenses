@@ -31,10 +31,7 @@ interface LocationState {
   tipoImportacao?: 'entrada' | 'saida'
 }
 
-/**
- * Converte datas para o formato ISO esperado pelo banco.
- * Aceita YYYY-MM-DD e DD/MM/YYYY.
- */
+
 function converterData(data: string): string {
   const valor = data.trim()
 
@@ -53,18 +50,7 @@ function converterData(data: string): string {
   return valor
 }
 
-/**
- * Converte valores monetários brasileiros:
- * R$ 1.234,56 -> 1234.56
- * -1.234,56  -> -1234.56
- *
- * A regra do tipo de importação é:
- * - saída: sempre negativa
- * - entrada: sempre positiva
- *
- * O tipo vem primeiro do estado da rota e, como compatibilidade,
- * da sessionStorage usada pela tela de preview.
- */
+
 function converterValor(
   valor: string,
   tipoImportacao: 'entrada' | 'saida',
@@ -78,20 +64,20 @@ function converterValor(
     throw new Error('Existe uma transação sem valor na planilha.')
   }
 
-  // Mantém apenas o sinal inicial; remove separadores de milhar.
+ 
   const negativoOriginal = texto.startsWith('-')
   const limpo = texto.replace(/[^\d.,]/g, '')
 
   let numero: number
 
   if (limpo.includes(',') && limpo.includes('.')) {
-    // Exemplo: 1.234,56
+    
     numero = Number(limpo.replace(/\./g, '').replace(',', '.'))
   } else if (limpo.includes(',')) {
-    // Exemplo: 1234,56
+    
     numero = Number(limpo.replace(',', '.'))
   } else {
-    // Exemplo: 1234.56 ou 1234
+    
     numero = Number(limpo)
   }
 
@@ -99,13 +85,12 @@ function converterValor(
     throw new Error(`Valor inválido na planilha: ${valor}`)
   }
 
-  // Saídas sempre negativas. Entradas sempre positivas.
-  // O sinal que veio da planilha não muda o tipo escolhido pelo usuário.
+
   if (tipoImportacao === 'entrada') {
     return Math.abs(numero)
   }
 
-  // negativoOriginal é lido para documentar/aceitar os dois formatos de origem.
+
   void negativoOriginal
   return -Math.abs(numero)
 }
@@ -132,8 +117,7 @@ export default function ConfirmarPlanilha() {
   const linhas = state?.linhas || []
   const arquivo = state?.arquivo
 
-  // Prioriza o tipo enviado pela navegação. Usa sessionStorage apenas
-  // como compatibilidade com a tela de preview existente.
+
   const tipoSalvo =
     typeof window !== 'undefined'
       ? window.sessionStorage.getItem('finly-tipo-importacao-planilha')
