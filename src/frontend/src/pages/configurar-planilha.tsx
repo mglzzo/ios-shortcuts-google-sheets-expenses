@@ -402,14 +402,7 @@ function ConfigurarPlanilha() {
     }
   }
 
-  function voltarParaPlanilha() {
-    navigate('/conexoes/planilha/preparar', {
-      state: {
-        arquivo,
-        configuracao,
-      },
-    })
-  }
+
 
   function continuar() {
     if (!camposObrigatoriosConcluidos || !arquivo) {

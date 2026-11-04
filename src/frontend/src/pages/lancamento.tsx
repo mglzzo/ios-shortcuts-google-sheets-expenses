@@ -8,7 +8,7 @@ import {
   ChevronDown,
 } from 'lucide-react'
 
-import MainLayout from '../../components/layout/MainLayout'
+import MainLayout from '../../components/layout/MainLayout.js'
 
 const meses = [
   'Janeiro',

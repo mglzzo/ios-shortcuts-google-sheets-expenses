@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react'
 import {
   ArrowRight,
@@ -21,7 +22,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 
-import MainLayout from '../../components/layout/MainLayout'
+import MainLayout from '../../components/layout/MainLayout.js'
 
 type Categoria = 'cartao' | 'parcelas' | 'habitos'
 
@@ -60,7 +61,6 @@ const abas: {
 ]
 
 const conteudos: Conteudo[] = [
-
   {
     id: 1,
     titulo: 'Parcelado também compromete',
@@ -181,8 +181,6 @@ const conteudos: Conteudo[] = [
     dica:
       'Conheça as datas da sua fatura e programe o pagamento para não esquecer o vencimento.',
   },
-
-
   {
     id: 7,
     titulo: 'Parcelar sem juros vale a pena?',
@@ -243,8 +241,6 @@ const conteudos: Conteudo[] = [
     dica:
       'Entenda os juros antes de contratar empréstimos. Em investimentos, avalie também riscos, taxas e impostos.',
   },
-
- 
   {
     id: 10,
     titulo: 'Como montar uma reserva',
@@ -387,16 +383,6 @@ const conteudos: Conteudo[] = [
   },
 ]
 
-const desafios = [
-  'Anote todos os seus gastos do dia.',
-  'Confira suas compras no cartão.',
-  'Identifique um gasto que pode reduzir.',
-  'Revise suas assinaturas e cobranças recorrentes.',
-  'Confira suas parcelas futuras.',
-  'Defina quanto deseja guardar no próximo mês.',
-  'Revise seu orçamento e comemore seu progresso.',
-]
-
 function Ilustracao({ tipo }: { tipo: TipoIlustracao }) {
   const fundos: Record<TipoIlustracao, string> = {
     cartao: 'bg-[#f0eaff]',
@@ -429,6 +415,7 @@ function Ilustracao({ tipo }: { tipo: TipoIlustracao }) {
       <div
         className={`absolute h-[108px] w-[170px] rounded-full ${fundos[tipo]}`}
       />
+
       <div className="relative flex h-[76px] w-[88px] items-center justify-center rounded-2xl bg-white shadow-[0_8px_24px_rgba(64,54,120,0.10)]">
         <Icone
           size={45}
@@ -436,9 +423,11 @@ function Ilustracao({ tipo }: { tipo: TipoIlustracao }) {
           className="text-[#8058ef]"
         />
       </div>
+
       <div className="absolute right-[22%] top-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#ffbd57] text-[10px] font-bold text-white shadow-sm">
         {tipo === 'juros' || tipo === 'economia' ? 'R$' : '✓'}
       </div>
+
       <Sparkles
         size={21}
         className="absolute bottom-5 left-[23%] text-[#8b69f5]"
@@ -455,23 +444,13 @@ export default function Aprender() {
 
   const [concluidos, setConcluidos] = useState<number[]>(() => {
     try {
-      return JSON.parse(
+      const dados = JSON.parse(
         localStorage.getItem('finly-aprender-concluidos') || '[]',
       )
-    } catch {
-      return []
-    }
-  })
 
-  const [desafioIniciado, setDesafioIniciado] = useState(
-    () => localStorage.getItem('finly-desafio-iniciado') === 'true',
-  )
-
-  const [diasConcluidos, setDiasConcluidos] = useState<number[]>(() => {
-    try {
-      return JSON.parse(
-        localStorage.getItem('finly-desafio-dias') || '[]',
-      )
+      return Array.isArray(dados)
+        ? dados.filter((item): item is number => Number.isInteger(item))
+        : []
     } catch {
       return []
     }
@@ -483,20 +462,6 @@ export default function Aprender() {
       JSON.stringify(concluidos),
     )
   }, [concluidos])
-
-  useEffect(() => {
-    localStorage.setItem(
-      'finly-desafio-iniciado',
-      String(desafioIniciado),
-    )
-  }, [desafioIniciado])
-
-  useEffect(() => {
-    localStorage.setItem(
-      'finly-desafio-dias',
-      JSON.stringify(diasConcluidos),
-    )
-  }, [diasConcluidos])
 
   const conteudosFiltrados = conteudos.filter((conteudo) =>
     conteudo.categoria.includes(abaAtiva),
@@ -514,23 +479,14 @@ export default function Aprender() {
     )
   }
 
-  function alternarDia(dia: number) {
-    setDiasConcluidos((anteriores) =>
-      anteriores.includes(dia)
-        ? anteriores.filter((item) => item !== dia)
-        : [...anteriores, dia],
-    )
-  }
-
   return (
     <MainLayout>
-      <main className="min-h-screen w-full min-w-0 bg-transparent px-5 py-6 text-[#17213b] sm:px-7 lg:px-8">
-
-        {/* CABEÇALHO */}
+      <main className="min-h-screen w-full min-w-0 bg-transparent px-4 py-5 text-[#17213b] sm:px-7 sm:py-6 lg:px-8">
         <header className="mb-5">
           <h1 className="text-[26px] font-bold tracking-tight text-[#101b38] sm:text-[29px]">
             Aprenda sem complicação
           </h1>
+
           <p className="mt-1 text-sm text-[#71809e] sm:text-base">
             Conteúdos rápidos para cuidar melhor do seu dinheiro.
           </p>
@@ -565,10 +521,12 @@ export default function Aprender() {
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f0eaff] text-[#7950f5]">
                 <BookOpen size={20} />
               </div>
+
               <div>
                 <h2 className="text-sm font-bold text-[#17213b]">
                   Seu aprendizado
                 </h2>
+
                 <p className="text-xs text-[#8490a8]">
                   Continue aprendendo no seu ritmo.
                 </p>
@@ -587,9 +545,10 @@ export default function Aprender() {
             />
           </div>
 
-          <div className="mt-2 flex justify-between text-[11px] text-[#8490a8]">
+          <div className="mt-2 flex justify-between gap-3 text-[11px] text-[#8490a8]">
             <span>{progressoGeral}% concluído</span>
-            <span>
+
+            <span className="text-right">
               {progressoGeral === 100
                 ? 'Parabéns! Você concluiu tudo!'
                 : 'Cada conteúdo é um passo a mais.'}
@@ -597,12 +556,12 @@ export default function Aprender() {
           </div>
         </section>
 
-
         <section>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-base font-bold text-[#101b38]">
               Conteúdos para você
             </h2>
+
             <span className="text-xs text-[#8490a8]">
               {conteudosFiltrados.length} conteúdos disponíveis
             </span>
@@ -663,8 +622,6 @@ export default function Aprender() {
           </div>
         </section>
 
-
-  
         {conteudoSelecionado && (
           <div
             className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-[#101b38]/50 p-4 backdrop-blur-[3px]"
@@ -731,6 +688,7 @@ export default function Aprender() {
                     size={18}
                     className="text-[#7950f5]"
                   />
+
                   <h3 className="text-sm font-bold text-[#17213b]">
                     Exemplo prático
                   </h3>
@@ -744,6 +702,7 @@ export default function Aprender() {
               <div className="mt-4 rounded-xl bg-[#eaf8f1] p-4">
                 <div className="mb-2 flex items-center gap-2">
                   <Lightbulb size={18} className="text-[#159b65]" />
+
                   <h3 className="text-sm font-bold text-[#137c53]">
                     Dica para o seu dia a dia
                   </h3>
@@ -760,6 +719,7 @@ export default function Aprender() {
                   if (!concluidos.includes(conteudoSelecionado.id)) {
                     marcarConcluido(conteudoSelecionado.id)
                   }
+
                   setConteudoSelecionado(null)
                 }}
                 className={`mt-7 flex h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold transition ${
@@ -769,6 +729,7 @@ export default function Aprender() {
                 }`}
               >
                 <CheckCircle2 size={17} />
+
                 {concluidos.includes(conteudoSelecionado.id)
                   ? 'Conteúdo já concluído'
                   : 'Marcar como concluído'}
