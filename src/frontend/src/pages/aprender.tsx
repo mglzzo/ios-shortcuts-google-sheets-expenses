@@ -3,20 +3,13 @@ import { useEffect, useState } from 'react'
 import {
   ArrowRight,
   BookOpen,
-  CalendarDays,
   CheckCircle2,
   Clock3,
   CreditCard,
   Leaf,
   Lightbulb,
-  PiggyBank,
-  ReceiptText,
-  Target,
   Wallet,
   X,
-  TrendingUp,
-  Banknote,
-  ShoppingBag,
   CircleDollarSign,
   Sparkles,
   type LucideIcon,
@@ -384,48 +377,60 @@ const conteudos: Conteudo[] = [
 ]
 
 function Ilustracao({ tipo }: { tipo: TipoIlustracao }) {
-  const fundos: Record<TipoIlustracao, string> = {
-    cartao: 'bg-[#f0eaff]',
-    juros: 'bg-[#e8f7ef]',
-    reserva: 'bg-[#e8f7ef]',
-    pix: 'bg-[#f0eaff]',
-    fatura: 'bg-[#eaf2ff]',
-    calendario: 'bg-[#fff3e9]',
-    economia: 'bg-[#e8f7ef]',
-    meta: 'bg-[#f0eaff]',
-    compras: 'bg-[#fff0f0]',
+  const emojis: Record<TipoIlustracao, string> = {
+    cartao: '🛒',
+    juros: '📈',
+    reserva: '🏦',
+    pix: '⚡',
+    fatura: '🧾',
+    calendario: '📅',
+    economia: '🪙',
+    meta: '🏆',
+    compras: '🛍️',
   }
 
-  const icones: Record<TipoIlustracao, LucideIcon> = {
-    cartao: CreditCard,
-    juros: TrendingUp,
-    reserva: PiggyBank,
-    pix: Wallet,
-    fatura: ReceiptText,
-    calendario: CalendarDays,
-    economia: Banknote,
-    meta: Target,
-    compras: ShoppingBag,
+  // Ajustes ópticos pequenos: os desenhos dos emojis têm alturas visuais diferentes
+  // mesmo quando ocupam uma caixa com as mesmas dimensões.
+  const ajusteVertical: Record<TipoIlustracao, string> = {
+    cartao: 'translateY(0px)',
+    juros: 'translateY(1px)',
+    reserva: 'translateY(-1px)',
+    pix: 'translateY(0px)',
+    fatura: 'translateY(1px)',
+    calendario: 'translateY(0px)',
+    economia: 'translateY(-1px)',
+    meta: 'translateY(0px)',
+    compras: 'translateY(0px)',
   }
-
-  const Icone = icones[tipo]
 
   return (
     <div className="relative flex h-[132px] w-full items-center justify-center overflow-hidden">
-      <div
-        className={`absolute h-[108px] w-[170px] rounded-full ${fundos[tipo]}`}
-      />
+      {/* Fundo padronizado para todos os conteúdos */}
+      <div className="absolute h-[108px] w-[170px] rounded-full bg-[#f0eaff]" />
 
-      <div className="relative flex h-[76px] w-[88px] items-center justify-center rounded-2xl bg-white shadow-[0_8px_24px_rgba(64,54,120,0.10)]">
-        <Icone
-          size={45}
-          strokeWidth={1.7}
-          className="text-[#8058ef]"
-        />
+      {/* Mesmo tamanho, formato e sombra em todos os ícones */}
+      <div className="relative flex h-[84px] w-[88px] items-center justify-center rounded-[24px] bg-white shadow-[0_10px_28px_rgba(128,88,239,0.14)]">
+        <span
+          role="img"
+          aria-label="Ilustração do conteúdo"
+          className="grid h-14 w-14 shrink-0 select-none place-items-center text-[42px] leading-none"
+          style={{
+            fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif',
+            lineHeight: 1,
+          }}
+        >
+          <span
+            className="block"
+            style={{ transform: ajusteVertical[tipo] }}
+          >
+            {emojis[tipo]}
+          </span>
+        </span>
       </div>
 
-      <div className="absolute right-[22%] top-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#ffbd57] text-[10px] font-bold text-white shadow-sm">
-        {tipo === 'juros' || tipo === 'economia' ? 'R$' : '✓'}
+      {/* Selo decorativo igual em todos os cards */}
+      <div className="absolute right-[22%] top-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#ffbd57] text-white shadow-sm">
+        <Sparkles size={15} strokeWidth={2.2} />
       </div>
 
       <Sparkles

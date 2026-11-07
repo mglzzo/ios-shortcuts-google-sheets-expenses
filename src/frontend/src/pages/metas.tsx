@@ -41,7 +41,7 @@ const opcoesIcones: {
   nome: string
   emoji: string
 }[] = [
-  { tipo: 'reserva', nome: 'Reserva', emoji: '🐷' },
+  { tipo: 'reserva', nome: 'Carro', emoji: '🚗' },
   { tipo: 'viagem', nome: 'Viagem', emoji: '✈️' },
   { tipo: 'notebook', nome: 'Notebook', emoji: '💻' },
   { tipo: 'casa', nome: 'Casa', emoji: '🏠' },
@@ -219,7 +219,7 @@ function Metas() {
                                 : 'border-[#edf0f5] bg-white hover:border-[#cfc1ff]'
                             }`}
                           >
-                            <span className="text-5xl sm:text-6xl">
+                            <span className="text-5xl sm:text-6xl" role="img" aria-label={item.nome}>
                               {item.emoji}
                             </span>
                           </div>
@@ -368,7 +368,7 @@ function Metas() {
                       className="mx-auto mb-4 flex h-28 w-28 items-center justify-center rounded-full"
                       style={{ backgroundColor: corSelecionada.fundo }}
                     >
-                      <span className="text-6xl">
+                      <span className="text-6xl" role="img" aria-label={iconeSelecionado.nome}>
                         {iconeSelecionado.emoji}
                       </span>
                     </div>
@@ -537,14 +537,16 @@ function Metas() {
                       >
                         <div className="mb-5 flex items-start gap-3">
                           <div
-                            className="flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-full text-4xl"
+                            className="flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-full"
                             style={{
                               backgroundColor:
                                 cores.find((cor) => cor.valor === meta.cor)
                                   ?.fundo ?? '#f0ebff',
                             }}
                           >
-                            {itemIcone?.emoji ?? '🎯'}
+                            <span className="text-4xl" role="img" aria-label={itemIcone?.nome ?? 'Meta'}>
+                              {itemIcone?.emoji ?? '🎯'}
+                            </span>
                           </div>
 
                           <div className="min-w-0 flex-1 pt-2">
@@ -668,7 +670,7 @@ function Metas() {
                 </h3>
 
                 <p className="mt-1 text-sm leading-5 text-[#7a83a0]">
-                  Grandes conquistas começam com pequenas metas. Continue assim! 💜
+                  Grandes conquistas começam com pequenas metas. Continue assim!
                 </p>
               </div>
             </section>
@@ -714,7 +716,7 @@ function Metas() {
                 return (
                   <>
                     <div className="mb-5 rounded-xl bg-[#f3efff] px-5 py-7 text-center">
-                      <span className="text-5xl">
+                      <span className="text-5xl" role="img" aria-label={itemIcone?.nome ?? 'Meta'}>
                         {itemIcone?.emoji ?? '🎯'}
                       </span>
 

@@ -1,6 +1,7 @@
 
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getMe } from '../services/auth.js'
 import {
   Home,
   Receipt,
@@ -14,11 +15,11 @@ import {
   ArrowRight,
   Check,
   Circle,
-  MoreHorizontal,
-  LogOut,
-  UserRound,
   Menu,
   X,
+  MoreHorizontal,
+  UserRound,
+  LogOut,
 } from 'lucide-react'
 
 const objetivos = [
@@ -27,6 +28,8 @@ const objetivos = [
   { id: 'aperto', titulo: 'Sair do aperto', complemento: 'no fim do mês', Icone: LifeBuoy, cor: 'coral' },
   { id: 'cartao', titulo: 'Entender melhor', complemento: 'meu cartão', Icone: CreditCard, cor: 'purple' },
 ]
+
+const CHAVE_CONFIGURACAO_PERFIL = 'finly_configuracao_perfil'
 
 const avatares = [
   { id: 'roxo', nome: 'Porquinho', src: '/porquinho.png' },
@@ -37,19 +40,60 @@ const avatares = [
   { id: 'capivara', nome: 'Capivara', src: '/avatar-capivara.png' },
 ]
 
+function carregarPreferencias() {
+  try {
+    const salvo = localStorage.getItem(CHAVE_CONFIGURACAO_PERFIL)
+    if (!salvo) return { objetivo: 'aprender', avatar: 'roxo' }
+
+    const dados = JSON.parse(salvo) as { objetivo?: string; avatar?: string }
+    const objetivoValido = objetivos.some((item) => item.id === dados.objetivo)
+    const avatarValido = avatares.some((item) => item.id === dados.avatar)
+
+    return {
+      objetivo: objetivoValido ? dados.objetivo! : 'aprender',
+      avatar: avatarValido ? dados.avatar! : 'roxo',
+    }
+  } catch {
+    return { objetivo: 'aprender', avatar: 'roxo' }
+  }
+}
+
 function ConfiguracaoPerfil() {
   const navigate = useNavigate()
+  const preferenciasIniciais = carregarPreferencias()
 
-  const [menuUsuarioAberto, setMenuUsuarioAberto] = useState(false)
   const [menuMobileAberto, setMenuMobileAberto] = useState(false)
   const [renda, setRenda] = useState('')
-  const [objetivo, setObjetivo] = useState('aprender')
-  const [avatar, setAvatar] = useState('roxo')
+  const [objetivo, setObjetivo] = useState(preferenciasIniciais.objetivo)
+  const [avatar, setAvatar] = useState(preferenciasIniciais.avatar)
   const [aviso, setAviso] = useState('')
+  const [nomeUsuario, setNomeUsuario] = useState('Usuário')
+  const [menuUsuarioAberto, setMenuUsuarioAberto] = useState(false)
+
+  useEffect(() => {
+    getMe()
+      .then((usuario) => setNomeUsuario(usuario.nome || 'Usuário'))
+      .catch(() => setNomeUsuario('Usuário'))
+  }, [])
+
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setAviso('Suas escolhas estão prontas. A integração para salvar no perfil será adicionada posteriormente.')
+    setAviso('')
+
+    try {
+      localStorage.setItem(
+        CHAVE_CONFIGURACAO_PERFIL,
+        JSON.stringify({ objetivo, avatar }),
+      )
+      // Atualiza a Sidebar imediatamente, mesmo quando ela permanece montada
+      // durante a navegação dentro do aplicativo.
+      window.dispatchEvent(new Event('finly-perfil-atualizado'))
+
+      navigate('/dashboard')
+    } catch {
+      setAviso('Não foi possível salvar as preferências neste navegador.')
+    }
   }
 
   function sair() {
@@ -93,46 +137,49 @@ function ConfiguracaoPerfil() {
             ))}
           </nav>
 
-          <div className="mt-auto border-t border-white/10 p-5">
-            <div className="relative">
-              {menuUsuarioAberto && (
-                <div className="absolute bottom-12 left-0 z-50 w-[205px] rounded-xl border border-white/10 bg-[#20375d] p-1.5 shadow-xl">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuUsuarioAberto(false)
-                      navigate('/configuracao-perfil')
-                    }}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[14px] text-white transition hover:bg-white/10"
-                  >
-                    <UserRound size={18} />
-                    Configurar perfil
-                  </button>
-                  <button
-                    type="button"
-                    onClick={sair}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[14px] text-white transition hover:bg-white/10"
-                  >
-                    <LogOut size={18} />
-                    Sair
-                  </button>
-                </div>
-              )}
-
-              <div className="flex items-center gap-2">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f5b9a5] text-[13px] font-bold text-[#633d37]">
-                  TE
-                </div>
-                <span className="min-w-0 flex-1 truncate text-[14px] font-medium">Testegi</span>
+          {/* Perfil do usuário no rodapé da navegação */}
+          <div className="relative mt-auto border-t border-white/10 p-5">
+            {menuUsuarioAberto && (
+              <div className="absolute bottom-[76px] left-5 z-50 w-[205px] rounded-xl border border-white/10 bg-[#20375d] p-1.5 shadow-xl">
                 <button
                   type="button"
-                  aria-label="Opções da conta"
-                  onClick={() => setMenuUsuarioAberto((v) => !v)}
-                  className="text-[#c4cee0] hover:text-white"
+                  onClick={() => setMenuUsuarioAberto(false)}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[14px] text-white hover:bg-white/10"
                 >
-                  <MoreHorizontal size={22} />
+                  <UserRound size={18} />
+                  Perfil
+                </button>
+                <button
+                  type="button"
+                  onClick={sair}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[14px] text-white hover:bg-white/10"
+                >
+                  <LogOut size={18} />
+                  Sair
                 </button>
               </div>
+            )}
+
+            <div className="flex min-w-0 items-center gap-3">
+              <img
+                src={avatares.find((item) => item.id === avatar)?.src || '/porquinho.png'}
+                alt="Avatar do perfil"
+                onError={(event) => {
+                  event.currentTarget.style.display = 'none'
+                }}
+                className="h-11 w-11 shrink-0 rounded-full bg-white object-cover"
+              />
+              <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-white">
+                {nomeUsuario}
+              </span>
+              <button
+                type="button"
+                aria-label="Opções da conta"
+                onClick={() => setMenuUsuarioAberto((aberto) => !aberto)}
+                className="shrink-0 text-[#c4cee0] hover:text-white"
+              >
+                <MoreHorizontal size={22} />
+              </button>
             </div>
           </div>
         </aside>
@@ -370,7 +417,7 @@ function ConfiguracaoPerfil() {
               </div>
 
               {aviso && (
-                <p role="status" className="mt-4 text-center text-xs text-[#6750d8]">
+                <p role="alert" className="mt-4 text-right text-sm font-medium text-red-600">
                   {aviso}
                 </p>
               )}

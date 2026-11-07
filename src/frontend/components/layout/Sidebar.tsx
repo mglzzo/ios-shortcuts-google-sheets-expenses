@@ -1,5 +1,4 @@
-
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Home,
   Receipt,
@@ -11,10 +10,27 @@ import {
   X,
 } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { getMe } from '../../src/services/auth.js'
 
 interface SidebarProps {
   mobileOpen?: boolean
   onClose?: () => void
+}
+
+interface PreferenciasPerfil {
+  objetivo?: string
+  avatar?: string
+}
+
+const CHAVE_CONFIGURACAO_PERFIL = 'finly_configuracao_perfil'
+
+const avatares: Record<string, string> = {
+  roxo: '/porquinho.png',
+  bone: '/avatar-bone.png',
+  chapeu: '/avatar-chapeu.png',
+  notebook: '/avatar-notebook.png',
+  caneca: '/avatar-caneca.png',
+  capivara: '/avatar-capivara.png',
 }
 
 const itensMenu = [
@@ -24,16 +40,60 @@ const itensMenu = [
   { label: 'Aprender', path: '/aprender', icon: BookOpen },
 ]
 
+function carregarAvatar(): string | null {
+  try {
+    const salvo = localStorage.getItem(CHAVE_CONFIGURACAO_PERFIL)
+    if (!salvo) return null
+
+    const preferencias = JSON.parse(salvo) as PreferenciasPerfil
+    return preferencias.avatar ? avatares[preferencias.avatar] ?? null : null
+  } catch {
+    return null
+  }
+}
+
 export default function Sidebar({
   mobileOpen = false,
   onClose,
 }: SidebarProps) {
   const navigate = useNavigate()
   const location = useLocation()
-  const [menuUsuarioAberto, setMenuUsuarioAberto] = useState(false)
 
-  const nome = 'Testegi'
-  const iniciais = nome.slice(0, 2).toUpperCase()
+  const [menuUsuarioAberto, setMenuUsuarioAberto] = useState(false)
+  const [nome, setNome] = useState('Usuário')
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(() => carregarAvatar())
+
+  useEffect(() => {
+    getMe()
+      .then((usuario) => {
+        setNome(usuario.nome || 'Usuário')
+      })
+      .catch(() => {
+        setNome('Usuário')
+      })
+  }, [])
+
+  useEffect(() => {
+    const atualizarAvatar = () => setAvatarSrc(carregarAvatar())
+
+    // O evento personalizado atualiza a Sidebar na mesma aba.
+    window.addEventListener('finly-perfil-atualizado', atualizarAvatar)
+    // O evento storage cobre alterações feitas em outra aba.
+    window.addEventListener('storage', atualizarAvatar)
+
+    return () => {
+      window.removeEventListener('finly-perfil-atualizado', atualizarAvatar)
+      window.removeEventListener('storage', atualizarAvatar)
+    }
+  }, [])
+
+  const iniciais = nome
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((parte) => parte.charAt(0))
+    .join('')
+    .toUpperCase()
 
   function sair() {
     localStorage.removeItem('token')
@@ -42,13 +102,13 @@ export default function Sidebar({
   }
 
   function navegar(path: string) {
+    setMenuUsuarioAberto(false)
     navigate(path)
     onClose?.()
   }
 
   return (
     <>
-      {/* Fundo escuro no celular */}
       {mobileOpen && (
         <button
           type="button"
@@ -68,7 +128,6 @@ export default function Sidebar({
           md:translate-x-0
         `}
       >
-        {/* Logo */}
         <div className="flex h-[92px] shrink-0 items-center justify-center gap-2 px-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-[10px] bg-[#a58aff] text-[23px] font-extrabold text-[#172b4d]">
             F
@@ -88,7 +147,6 @@ export default function Sidebar({
           </button>
         </div>
 
-        {/* Navegação */}
         <nav className="mt-5 flex flex-col gap-3 px-4">
           {itensMenu.map((item) => {
             const Icon = item.icon
@@ -119,7 +177,6 @@ export default function Sidebar({
           })}
         </nav>
 
-        {/* Perfil */}
         <div className="mt-auto border-t border-white/10 p-5">
           <div className="relative">
             {menuUsuarioAberto && (
@@ -145,9 +202,18 @@ export default function Sidebar({
             )}
 
             <div className="flex items-center gap-2">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f5b9a5] text-[13px] font-bold text-[#633d37]">
-                {iniciais}
-              </div>
+              {avatarSrc ? (
+                <img
+                  src={avatarSrc}
+                  alt="Avatar do perfil"
+                  onError={() => setAvatarSrc(null)}
+                  className="h-11 w-11 shrink-0 rounded-full bg-white object-cover"
+                />
+              ) : (
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f5b9a5] text-[13px] font-bold text-[#633d37]">
+                  {iniciais || 'US'}
+                </div>
+              )}
 
               <span className="min-w-0 flex-1 truncate text-[14px] font-medium">
                 {nome}
