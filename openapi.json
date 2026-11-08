@@ -6,14 +6,40 @@
     "version": "1.0.0"
   },
   "servers": [
-    { "url": "http://localhost:3000", "description": "Ambiente local (wrangler dev)" }
+    {
+      "url": "http://localhost:3000",
+      "description": "Ambiente local (wrangler dev)"
+    }
   ],
   "tags": [
-    { "name": "Auth", "description": "Cadastro, login e sessão do usuário" },
-    { "name": "Accounts", "description": "Contas bancárias conectadas via Pluggy" },
-    { "name": "Categories", "description": "Categorias de transações" },
-    { "name": "Transactions", "description": "Transações financeiras (manuais, importadas ou via Pluggy)" },
-    { "name": "Pluggy", "description": "Sincronização com Open Finance (Pluggy)" }
+    {
+      "name": "Auth",
+      "description": "Cadastro, login e sessão do usuário"
+    },
+    {
+      "name": "Accounts",
+      "description": "Contas bancárias conectadas via Pluggy"
+    },
+    {
+      "name": "Categories",
+      "description": "Categorias de transações"
+    },
+    {
+      "name": "Transactions",
+      "description": "Transações financeiras (manuais, importadas ou via Pluggy)"
+    },
+    {
+      "name": "Pluggy",
+      "description": "Sincronização com Open Finance (Pluggy)"
+    },
+    {
+      "name": "Income",
+      "description": "Renda mensal do usu?rio"
+    },
+    {
+      "name": "Goals",
+      "description": "Metas financeiras do usu?rio"
+    }
   ],
   "components": {
     "securitySchemes": {
@@ -27,28 +53,52 @@
       "Erro": {
         "type": "object",
         "properties": {
-          "erro": { "type": "string", "example": "Mensagem de erro." }
+          "erro": {
+            "type": "string",
+            "example": "Mensagem de erro."
+          }
         }
       },
       "Usuario": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "nome": { "type": "string" },
-          "email": { "type": "string", "format": "email" },
-          "createdAt": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "LoginResponse": {
         "type": "object",
         "properties": {
-          "token": { "type": "string" },
+          "token": {
+            "type": "string"
+          },
           "usuario": {
             "type": "object",
             "properties": {
-              "id": { "type": "string", "format": "uuid" },
-              "nome": { "type": "string" },
-              "email": { "type": "string", "format": "email" }
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "nome": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              }
             }
           }
         }
@@ -56,36 +106,93 @@
       "Categoria": {
         "type": "object",
         "properties": {
-          "id": { "type": "integer" },
-          "nome": { "type": "string", "example": "Mercado" }
+          "id": {
+            "type": "integer"
+          },
+          "nome": {
+            "type": "string",
+            "example": "Mercado"
+          }
         }
       },
       "Conta": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "nome": { "type": "string" },
-          "tipo": { "type": "string" },
-          "pluggyAccountId": { "type": "string" },
-          "conexaoId": { "type": "string", "format": "uuid" },
-          "instituicao": { "type": "string" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "pluggyAccountId": {
+            "type": "string"
+          },
+          "conexaoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "instituicao": {
+            "type": "string"
+          }
         }
       },
       "Transacao": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "format": "uuid" },
-          "data": { "type": "string", "format": "date", "example": "2026-09-01" },
-          "estabelecimento": { "type": "string" },
-          "valor": { "type": "string", "example": "129.90" },
-          "metodoPagamento": { "type": "string", "example": "Crédito" },
-          "categoriaId": { "type": "integer", "nullable": true },
-          "categoria": { "type": "string", "nullable": true },
-          "categoriaPluggy": { "type": "string", "nullable": true },
-          "observacao": { "type": "string", "nullable": true },
-          "origem": { "type": "string", "enum": ["manual", "pluggy"] },
-          "contaId": { "type": "string", "format": "uuid" },
-          "conta": { "type": "string" }
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "data": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-09-01"
+          },
+          "estabelecimento": {
+            "type": "string"
+          },
+          "valor": {
+            "type": "string",
+            "example": "129.90"
+          },
+          "metodoPagamento": {
+            "type": "string",
+            "example": "Crédito"
+          },
+          "categoriaId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "categoria": {
+            "type": "string",
+            "nullable": true
+          },
+          "categoriaPluggy": {
+            "type": "string",
+            "nullable": true
+          },
+          "observacao": {
+            "type": "string",
+            "nullable": true
+          },
+          "origem": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "pluggy"
+            ]
+          },
+          "contaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "conta": {
+            "type": "string"
+          }
         }
       },
       "ListaTransacoes": {
@@ -93,70 +200,148 @@
         "properties": {
           "data": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/Transacao" }
+            "items": {
+              "$ref": "#/components/schemas/Transacao"
+            }
           },
-          "page": { "type": "integer", "example": 1 },
-          "limit": { "type": "integer", "example": 50 },
-          "hasMore": { "type": "boolean" }
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "limit": {
+            "type": "integer",
+            "example": 50
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
         }
       },
       "TransacaoManualInput": {
         "type": "object",
-        "required": ["data", "estabelecimento", "valor", "metodoPagamento"],
+        "required": [
+          "data",
+          "estabelecimento",
+          "valor",
+          "metodoPagamento"
+        ],
         "properties": {
-          "data": { "type": "string", "format": "date", "example": "2026-09-01" },
-          "estabelecimento": { "type": "string", "example": "Padaria do Zé" },
-          "valor": { "type": "number", "example": 25.5 },
-          "metodoPagamento": { "type": "string", "example": "Débito" },
-          "categoriaId": { "type": "integer", "nullable": true },
-          "observacao": { "type": "string", "nullable": true }
+          "data": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-09-01"
+          },
+          "estabelecimento": {
+            "type": "string",
+            "example": "Padaria do Zé"
+          },
+          "valor": {
+            "type": "number",
+            "example": 25.5
+          },
+          "metodoPagamento": {
+            "type": "string",
+            "example": "Débito"
+          },
+          "categoriaId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "observacao": {
+            "type": "string",
+            "nullable": true
+          }
         }
       },
       "CorrigirCategoriaInput": {
         "type": "object",
-        "required": ["categoriaId"],
+        "required": [
+          "categoriaId"
+        ],
         "properties": {
-          "categoriaId": { "type": "integer", "example": 3 }
+          "categoriaId": {
+            "type": "integer",
+            "example": 3
+          }
         }
       },
       "CorrigirCategoriaResponse": {
         "type": "object",
         "properties": {
-          "transacaoId": { "type": "string", "format": "uuid" },
-          "estabelecimentoNormalizado": { "type": "string" },
-          "categoriaId": { "type": "integer" },
-          "transacoesAtualizadas": { "type": "integer" }
+          "transacaoId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "estabelecimentoNormalizado": {
+            "type": "string"
+          },
+          "categoriaId": {
+            "type": "integer"
+          },
+          "transacoesAtualizadas": {
+            "type": "integer"
+          }
         }
       },
       "TransacaoImportada": {
         "type": "object",
         "properties": {
-          "data": { "type": "string", "format": "date" },
-          "estabelecimento": { "type": "string" },
-          "valor": { "type": "number" },
-          "metodoPagamento": { "type": "string" },
-          "categoria": { "type": "string" },
-          "observacao": { "type": "string" }
+          "data": {
+            "type": "string",
+            "format": "date"
+          },
+          "estabelecimento": {
+            "type": "string"
+          },
+          "valor": {
+            "type": "number"
+          },
+          "metodoPagamento": {
+            "type": "string"
+          },
+          "categoria": {
+            "type": "string"
+          },
+          "observacao": {
+            "type": "string"
+          }
         }
       },
       "PreviewImportacao": {
         "type": "object",
         "properties": {
-          "colunasEncontradas": { "type": "array", "items": { "type": "string" } },
-          "totalLinhas": { "type": "integer" },
-          "validas": { "type": "integer" },
-          "invalidas": { "type": "integer" },
+          "colunasEncontradas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "totalLinhas": {
+            "type": "integer"
+          },
+          "validas": {
+            "type": "integer"
+          },
+          "invalidas": {
+            "type": "integer"
+          },
           "transacoes": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/TransacaoImportada" }
+            "items": {
+              "$ref": "#/components/schemas/TransacaoImportada"
+            }
           },
           "erros": {
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
-                "linha": { "type": "integer" },
-                "erro": { "type": "string" }
+                "linha": {
+                  "type": "integer"
+                },
+                "erro": {
+                  "type": "string"
+                }
               }
             }
           }
@@ -165,16 +350,26 @@
       "ResultadoImportacao": {
         "type": "object",
         "properties": {
-          "total": { "type": "integer" },
-          "inseridas": { "type": "integer" },
-          "ignoradas": { "type": "integer" },
+          "total": {
+            "type": "integer"
+          },
+          "inseridas": {
+            "type": "integer"
+          },
+          "ignoradas": {
+            "type": "integer"
+          },
           "erros": {
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
-                "linha": { "type": "integer" },
-                "erro": { "type": "string" }
+                "linha": {
+                  "type": "integer"
+                },
+                "erro": {
+                  "type": "string"
+                }
               }
             }
           }
@@ -183,9 +378,146 @@
       "PluggySyncResponse": {
         "type": "object",
         "properties": {
-          "sucesso": { "type": "boolean" },
-          "totalRecebidas": { "type": "integer" },
-          "totalInseridas": { "type": "integer" }
+          "sucesso": {
+            "type": "boolean"
+          },
+          "totalRecebidas": {
+            "type": "integer"
+          },
+          "totalInseridas": {
+            "type": "integer"
+          }
+        }
+      },
+      "RendaMensalInput": {
+        "type": "object",
+        "required": [
+          "valor"
+        ],
+        "properties": {
+          "valor": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 99999999.99,
+            "example": 5000
+          }
+        }
+      },
+      "RendaMensal": {
+        "type": "object",
+        "required": [
+          "valor",
+          "atualizadoEm"
+        ],
+        "properties": {
+          "valor": {
+            "type": "number",
+            "nullable": true,
+            "example": 5000
+          },
+          "atualizadoEm": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "MetaInput": {
+        "type": "object",
+        "required": [
+          "nome",
+          "valorDesejado"
+        ],
+        "properties": {
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Viagem"
+          },
+          "valorDesejado": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 99999999.99,
+            "example": 8000
+          },
+          "valorAcumulado": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 99999999.99,
+            "default": 0,
+            "example": 1500
+          }
+        }
+      },
+      "AtualizarMetaInput": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Viagem"
+          },
+          "valorDesejado": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 99999999.99,
+            "example": 10000
+          },
+          "valorAcumulado": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 99999999.99,
+            "example": 2000
+          }
+        }
+      },
+      "MetaFinanceira": {
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "valorDesejado",
+          "valorAcumulado",
+          "percentualConcluido",
+          "createdAt",
+          "atualizadoEm"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string",
+            "example": "Viagem"
+          },
+          "valorDesejado": {
+            "type": "number",
+            "example": 8000
+          },
+          "valorAcumulado": {
+            "type": "number",
+            "example": 1500
+          },
+          "percentualConcluido": {
+            "type": "number",
+            "example": 18.75
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "atualizadoEm": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ListaMetas": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/MetaFinanceira"
         }
       }
     }
@@ -194,7 +526,9 @@
     "/": {
       "get": {
         "summary": "Healthcheck da API",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [],
         "responses": {
           "200": {
@@ -203,7 +537,12 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": { "status": { "type": "string", "example": "API funcionando" } }
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "API funcionando"
+                    }
+                  }
                 }
               }
             }
@@ -214,7 +553,9 @@
     "/auth/register": {
       "post": {
         "summary": "Cadastrar novo usuário",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [],
         "requestBody": {
           "required": true,
@@ -222,11 +563,23 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["nome", "email", "senha"],
+                "required": [
+                  "nome",
+                  "email",
+                  "senha"
+                ],
                 "properties": {
-                  "nome": { "type": "string" },
-                  "email": { "type": "string", "format": "email" },
-                  "senha": { "type": "string", "format": "password" }
+                  "nome": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "senha": {
+                    "type": "string",
+                    "format": "password"
+                  }
                 }
               }
             }
@@ -235,11 +588,23 @@
         "responses": {
           "201": {
             "description": "Usuário criado",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Usuario" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Usuario"
+                }
+              }
+            }
           },
           "400": {
             "description": "Erro de validação (ex: e-mail já cadastrado)",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
           }
         }
       }
@@ -247,7 +612,9 @@
     "/auth/login": {
       "post": {
         "summary": "Autenticar usuário e obter token JWT",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "security": [],
         "requestBody": {
           "required": true,
@@ -255,10 +622,19 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["identificador", "senha"],
+                "required": [
+                  "identificador",
+                  "senha"
+                ],
                 "properties": {
-                  "identificador": { "type": "string", "description": "E-mail ou nome do usuário" },
-                  "senha": { "type": "string", "format": "password" }
+                  "identificador": {
+                    "type": "string",
+                    "description": "E-mail ou nome do usuário"
+                  },
+                  "senha": {
+                    "type": "string",
+                    "format": "password"
+                  }
                 }
               }
             }
@@ -267,11 +643,23 @@
         "responses": {
           "200": {
             "description": "Login realizado",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponse" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
           },
           "401": {
             "description": "Credenciais inválidas",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
           }
         }
       }
@@ -279,16 +667,34 @@
     "/auth/me": {
       "get": {
         "summary": "Obter dados do usuário autenticado",
-        "tags": ["Auth"],
-        "security": [{ "bearerAuth": [] }],
+        "tags": [
+          "Auth"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Dados do usuário",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Usuario" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Usuario"
+                }
+              }
+            }
           },
           "401": {
             "description": "Token ausente, inválido ou expirado",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
           }
         }
       }
@@ -296,8 +702,14 @@
     "/categories": {
       "get": {
         "summary": "Listar categorias disponíveis",
-        "tags": ["Categories"],
-        "security": [{ "bearerAuth": [] }],
+        "tags": [
+          "Categories"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Lista de categorias",
@@ -306,21 +718,41 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Categoria" } }
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Categoria"
+                      }
+                    }
                   }
                 }
               }
             }
           },
-          "401": { "description": "Não autenticado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } }
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
         }
       }
     },
     "/accounts": {
       "get": {
         "summary": "Listar contas bancárias do usuário",
-        "tags": ["Accounts"],
-        "security": [{ "bearerAuth": [] }],
+        "tags": [
+          "Accounts"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Lista de contas",
@@ -329,90 +761,241 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Conta" } }
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Conta"
+                      }
+                    }
                   }
                 }
               }
             }
           },
-          "401": { "description": "Não autenticado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } }
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
         }
       }
     },
     "/transactions": {
       "get": {
         "summary": "Listar transações do usuário (paginado)",
-        "tags": ["Transactions"],
-        "security": [{ "bearerAuth": [] }],
+        "tags": [
+          "Transactions"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
-          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
-          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50, "maximum": 100 } }
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "maximum": 100
+            }
+          }
         ],
         "responses": {
           "200": {
             "description": "Lista paginada de transações",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ListaTransacoes" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListaTransacoes"
+                }
+              }
+            }
           },
-          "401": { "description": "Não autenticado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } }
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
         }
       }
     },
     "/transactions/manual": {
       "post": {
         "summary": "Criar transação manual",
-        "tags": ["Transactions"],
-        "security": [{ "bearerAuth": [] }],
+        "tags": [
+          "Transactions"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TransacaoManualInput" } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransacaoManualInput"
+              }
+            }
+          }
         },
         "responses": {
           "201": {
             "description": "Transação criada",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Transacao" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transacao"
+                }
+              }
+            }
           },
-          "401": { "description": "Não autenticado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
-          "500": { "description": "Erro ao criar transação", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } }
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao criar transação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
         }
       }
     },
     "/transactions/{id}/category": {
       "patch": {
         "summary": "Corrigir categoria de uma transação (e treinar categorização futura)",
-        "tags": ["Transactions"],
-        "security": [{ "bearerAuth": [] }],
+        "tags": [
+          "Transactions"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
         ],
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CorrigirCategoriaInput" } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrigirCategoriaInput"
+              }
+            }
+          }
         },
         "responses": {
           "200": {
             "description": "Categoria corrigida",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CorrigirCategoriaResponse" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrigirCategoriaResponse"
+                }
+              }
+            }
           },
-          "400": { "description": "Parâmetros inválidos", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
-          "401": { "description": "Não autenticado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
-          "500": { "description": "Erro ao alterar categoria", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } }
+          "400": {
+            "description": "Parâmetros inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao alterar categoria",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
         }
       }
     },
     "/transactions/import/preview": {
       "post": {
         "summary": "Pré-visualizar importação de transações via planilha (.xlsx)",
-        "tags": ["Transactions"],
-        "security": [{ "bearerAuth": [] }],
+        "tags": [
+          "Transactions"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": ["arquivo"],
+                "required": [
+                  "arquivo"
+                ],
                 "properties": {
-                  "arquivo": { "type": "string", "format": "binary", "description": "Arquivo .xlsx (máx. 5MB)" }
+                  "arquivo": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Arquivo .xlsx (máx. 5MB)"
+                  }
                 }
               }
             }
@@ -421,30 +1004,73 @@
         "responses": {
           "200": {
             "description": "Prévia da importação",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PreviewImportacao" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewImportacao"
+                }
+              }
+            }
           },
-          "400": { "description": "Arquivo não enviado ou formato inválido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
-          "401": { "description": "Não autenticado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
-          "500": { "description": "Erro ao processar planilha", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } }
+          "400": {
+            "description": "Arquivo não enviado ou formato inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao processar planilha",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
         }
       }
     },
     "/transactions/import/confirm": {
       "post": {
         "summary": "Confirmar e persistir transações importadas",
-        "tags": ["Transactions"],
-        "security": [{ "bearerAuth": [] }],
+        "tags": [
+          "Transactions"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["transacoes"],
+                "required": [
+                  "transacoes"
+                ],
                 "properties": {
                   "transacoes": {
                     "type": "array",
-                    "items": { "$ref": "#/components/schemas/TransacaoImportada" }
+                    "items": {
+                      "$ref": "#/components/schemas/TransacaoImportada"
+                    }
                   }
                 }
               }
@@ -454,26 +1080,458 @@
         "responses": {
           "201": {
             "description": "Resultado da importação",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResultadoImportacao" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoImportacao"
+                }
+              }
+            }
           },
-          "400": { "description": "Corpo inválido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
-          "401": { "description": "Não autenticado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
-          "500": { "description": "Erro ao importar transações", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } }
+          "400": {
+            "description": "Corpo inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao importar transações",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
         }
       }
     },
     "/pluggy/sync": {
       "post": {
         "summary": "Sincronizar contas e transações via Pluggy (Open Finance)",
-        "tags": ["Pluggy"],
-        "security": [{ "bearerAuth": [] }],
+        "tags": [
+          "Pluggy"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Sincronização concluída",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PluggySyncResponse" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PluggySyncResponse"
+                }
+              }
+            }
           },
-          "401": { "description": "Não autenticado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
-          "500": { "description": "Erro ao sincronizar", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } }
+          "401": {
+            "description": "Não autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao sincronizar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/income": {
+      "get": {
+        "summary": "Consultar renda mensal",
+        "tags": [
+          "Income"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Renda mensal cadastrada; os campos podem ser null se ainda n?o houver renda",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RendaMensal"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N?o autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Criar ou atualizar renda mensal",
+        "tags": [
+          "Income"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RendaMensalInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Renda mensal salva",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RendaMensal"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Valor inv?lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N?o autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/goals": {
+      "get": {
+        "summary": "Listar metas financeiras",
+        "tags": [
+          "Goals"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Metas do usu?rio",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListaMetas"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N?o autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar meta financeira",
+        "tags": [
+          "Goals"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MetaInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Meta criada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetaFinanceira"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Nome ou valor inv?lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N?o autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/goals/{id}": {
+      "patch": {
+        "summary": "Atualizar meta financeira",
+        "tags": [
+          "Goals"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AtualizarMetaInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Meta atualizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetaFinanceira"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ID, nome ou valor inv?lido; informe ao menos um campo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N?o autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Meta n?o encontrada para este usu?rio",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Excluir meta financeira",
+        "tags": [
+          "Goals"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Meta exclu?da"
+          },
+          "400": {
+            "description": "ID inv?lido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "N?o autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Meta n?o encontrada para este usu?rio",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
         }
       }
     }
