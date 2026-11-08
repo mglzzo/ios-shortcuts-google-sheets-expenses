@@ -29,6 +29,34 @@
       "when": 1787833655848,
       "tag": "0003_windy_lizard",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794099427733,
+      "tag": "0004_transacoes_estabelecimento_normalizado",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794099479137,
+      "tag": "0005_transacoes_duplicidade_unique",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794099569124,
+      "tag": "0006_rendas_mensais",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794099581347,
+      "tag": "0007_metas_financeiras",
+      "breakpoints": true
     }
   ]
 }

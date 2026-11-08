@@ -1,0 +1,481 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "AppScriptsFinance API",
+    "description": "API de controle financeiro pessoal com integração Pluggy (Open Finance), categorização automática de transações e importação via planilha.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "http://localhost:3000", "description": "Ambiente local (wrangler dev)" }
+  ],
+  "tags": [
+    { "name": "Auth", "description": "Cadastro, login e sessão do usuário" },
+    { "name": "Accounts", "description": "Contas bancárias conectadas via Pluggy" },
+    { "name": "Categories", "description": "Categorias de transações" },
+    { "name": "Transactions", "description": "Transações financeiras (manuais, importadas ou via Pluggy)" },
+    { "name": "Pluggy", "description": "Sincronização com Open Finance (Pluggy)" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Erro": {
+        "type": "object",
+        "properties": {
+          "erro": { "type": "string", "example": "Mensagem de erro." }
+        }
+      },
+      "Usuario": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "nome": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "token": { "type": "string" },
+          "usuario": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "nome": { "type": "string" },
+              "email": { "type": "string", "format": "email" }
+            }
+          }
+        }
+      },
+      "Categoria": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "nome": { "type": "string", "example": "Mercado" }
+        }
+      },
+      "Conta": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "nome": { "type": "string" },
+          "tipo": { "type": "string" },
+          "pluggyAccountId": { "type": "string" },
+          "conexaoId": { "type": "string", "format": "uuid" },
+          "instituicao": { "type": "string" }
+        }
+      },
+      "Transacao": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "data": { "type": "string", "format": "date", "example": "2026-09-01" },
+          "estabelecimento": { "type": "string" },
+          "valor": { "type": "string", "example": "129.90" },
+          "metodoPagamento": { "type": "string", "example": "Crédito" },
+          "categoriaId": { "type": "integer", "nullable": true },
+          "categoria": { "type": "string", "nullable": true },
+          "categoriaPluggy": { "type": "string", "nullable": true },
+          "observacao": { "type": "string", "nullable": true },
+          "origem": { "type": "string", "enum": ["manual", "pluggy"] },
+          "contaId": { "type": "string", "format": "uuid" },
+          "conta": { "type": "string" }
+        }
+      },
+      "ListaTransacoes": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Transacao" }
+          },
+          "page": { "type": "integer", "example": 1 },
+          "limit": { "type": "integer", "example": 50 },
+          "hasMore": { "type": "boolean" }
+        }
+      },
+      "TransacaoManualInput": {
+        "type": "object",
+        "required": ["data", "estabelecimento", "valor", "metodoPagamento"],
+        "properties": {
+          "data": { "type": "string", "format": "date", "example": "2026-09-01" },
+          "estabelecimento": { "type": "string", "example": "Padaria do Zé" },
+          "valor": { "type": "number", "example": 25.5 },
+          "metodoPagamento": { "type": "string", "example": "Débito" },
+          "categoriaId": { "type": "integer", "nullable": true },
+          "observacao": { "type": "string", "nullable": true }
+        }
+      },
+      "CorrigirCategoriaInput": {
+        "type": "object",
+        "required": ["categoriaId"],
+        "properties": {
+          "categoriaId": { "type": "integer", "example": 3 }
+        }
+      },
+      "CorrigirCategoriaResponse": {
+        "type": "object",
+        "properties": {
+          "transacaoId": { "type": "string", "format": "uuid" },
+          "estabelecimentoNormalizado": { "type": "string" },
+          "categoriaId": { "type": "integer" },
+          "transacoesAtualizadas": { "type": "integer" }
+        }
+      },
+      "TransacaoImportada": {
+        "type": "object",
+        "properties": {
+          "data": { "type": "string", "format": "date" },
+          "estabelecimento": { "type": "string" },
+          "valor": { "type": "number" },
+          "metodoPagamento": { "type": "string" },
+          "categoria": { "type": "string" },
+          "observacao": { "type": "string" }
+        }
+      },
+      "PreviewImportacao": {
+        "type": "object",
+        "properties": {
+          "colunasEncontradas": { "type": "array", "items": { "type": "string" } },
+          "totalLinhas": { "type": "integer" },
+          "validas": { "type": "integer" },
+          "invalidas": { "type": "integer" },
+          "transacoes": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TransacaoImportada" }
+          },
+          "erros": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "linha": { "type": "integer" },
+                "erro": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "ResultadoImportacao": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer" },
+          "inseridas": { "type": "integer" },
+          "ignoradas": { "type": "integer" },
+          "erros": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "linha": { "type": "integer" },
+                "erro": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "PluggySyncResponse": {
+        "type": "object",
+        "properties": {
+          "sucesso": { "type": "boolean" },
+          "totalRecebidas": { "type": "integer" },
+          "totalInseridas": { "type": "integer" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Healthcheck da API",
+        "tags": ["Auth"],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "API no ar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "status": { "type": "string", "example": "API funcionando" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "Cadastrar novo usuário",
+        "tags": ["Auth"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["nome", "email", "senha"],
+                "properties": {
+                  "nome": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "senha": { "type": "string", "format": "password" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuário criado",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Usuario" } } }
+          },
+          "400": {
+            "description": "Erro de validação (ex: e-mail já cadastrado)",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Autenticar usuário e obter token JWT",
+        "tags": ["Auth"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["identificador", "senha"],
+                "properties": {
+                  "identificador": { "type": "string", "description": "E-mail ou nome do usuário" },
+                  "senha": { "type": "string", "format": "password" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login realizado",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponse" } } }
+          },
+          "401": {
+            "description": "Credenciais inválidas",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Obter dados do usuário autenticado",
+        "tags": ["Auth"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Dados do usuário",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Usuario" } } }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } }
+          }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "summary": "Listar categorias disponíveis",
+        "tags": ["Categories"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Lista de categorias",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Categoria" } }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Não autenticado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } }
+        }
+      }
+    },
+    "/accounts": {
+      "get": {
+        "summary": "Listar contas bancárias do usuário",
+        "tags": ["Accounts"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Lista de contas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Conta" } }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Não autenticado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } }
+        }
+      }
+    },
+    "/transactions": {
+      "get": {
+        "summary": "Listar transações do usuário (paginado)",
+        "tags": ["Transactions"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50, "maximum": 100 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista paginada de transações",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ListaTransacoes" } } }
+          },
+          "401": { "description": "Não autenticado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } }
+        }
+      }
+    },
+    "/transactions/manual": {
+      "post": {
+        "summary": "Criar transação manual",
+        "tags": ["Transactions"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TransacaoManualInput" } } }
+        },
+        "responses": {
+          "201": {
+            "description": "Transação criada",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Transacao" } } }
+          },
+          "401": { "description": "Não autenticado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
+          "500": { "description": "Erro ao criar transação", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } }
+        }
+      }
+    },
+    "/transactions/{id}/category": {
+      "patch": {
+        "summary": "Corrigir categoria de uma transação (e treinar categorização futura)",
+        "tags": ["Transactions"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CorrigirCategoriaInput" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Categoria corrigida",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CorrigirCategoriaResponse" } } }
+          },
+          "400": { "description": "Parâmetros inválidos", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
+          "401": { "description": "Não autenticado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
+          "500": { "description": "Erro ao alterar categoria", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } }
+        }
+      }
+    },
+    "/transactions/import/preview": {
+      "post": {
+        "summary": "Pré-visualizar importação de transações via planilha (.xlsx)",
+        "tags": ["Transactions"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["arquivo"],
+                "properties": {
+                  "arquivo": { "type": "string", "format": "binary", "description": "Arquivo .xlsx (máx. 5MB)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Prévia da importação",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PreviewImportacao" } } }
+          },
+          "400": { "description": "Arquivo não enviado ou formato inválido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
+          "401": { "description": "Não autenticado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
+          "500": { "description": "Erro ao processar planilha", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } }
+        }
+      }
+    },
+    "/transactions/import/confirm": {
+      "post": {
+        "summary": "Confirmar e persistir transações importadas",
+        "tags": ["Transactions"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["transacoes"],
+                "properties": {
+                  "transacoes": {
+                    "type": "array",
+                    "items": { "$ref": "#/components/schemas/TransacaoImportada" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado da importação",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResultadoImportacao" } } }
+          },
+          "400": { "description": "Corpo inválido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
+          "401": { "description": "Não autenticado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
+          "500": { "description": "Erro ao importar transações", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } }
+        }
+      }
+    },
+    "/pluggy/sync": {
+      "post": {
+        "summary": "Sincronizar contas e transações via Pluggy (Open Finance)",
+        "tags": ["Pluggy"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Sincronização concluída",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PluggySyncResponse" } } }
+          },
+          "401": { "description": "Não autenticado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
+          "500": { "description": "Erro ao sincronizar", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } }
+        }
+      }
+    }
+  }
+}

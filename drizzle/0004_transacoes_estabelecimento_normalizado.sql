@@ -1,0 +1,1 @@
+ALTER TABLE "transacoes" ADD COLUMN "estabelecimento_normalizado" text;

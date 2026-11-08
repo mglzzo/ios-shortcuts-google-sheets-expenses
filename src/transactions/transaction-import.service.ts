@@ -4,8 +4,10 @@ import {obterOuCriarContaManual} from "./transaction.service.js";
 import {
   buscarCategoriaIdPorNome,
 } from "../../categorizar.js";
-import{db} from "../../db/client/Client.js";
-import {transacoes} from "../../db/schema/schema.js";   
+import {
+  inserirTransacoesSemDuplicidade,
+  type NovaTransacao,
+} from "./transaction-deduplication.service.js";
 export interface TransacaoImportada {
   data: string;
   estabelecimento: string;
@@ -13,8 +15,8 @@ export interface TransacaoImportada {
   metodoPagamento?: string;
   categoria?: string;
   observacao?: string;
-  parcelaAtual?: number;
-  parcelaTotal?: number;
+  parcelaAtual?: number | string | null;
+  parcelaTotal?: number | string | null;
 }
 
 export interface PreviewImportacao {
@@ -183,6 +185,55 @@ function normalizarData(
   );
 }
 
+function normalizarParcela(
+  valor: unknown,
+  nomeCampo: string
+): number | null {
+  if (valor === null || valor === undefined) {
+    return null;
+  }
+
+  const texto =
+    typeof valor === "number"
+      ? String(valor)
+      : valorCelulaParaString(
+          valor as ExcelJS.CellValue
+        ).trim();
+
+  if (!texto) {
+    return null;
+  }
+
+  const numero = Number(texto.replace(",", "."));
+
+  if (
+    !Number.isInteger(numero) ||
+    numero < 1 ||
+    numero > 999
+  ) {
+    throw new Error(
+      `${nomeCampo} inválida: ${texto}`
+    );
+  }
+
+  return numero;
+}
+
+function validarParcelas(
+  parcelaAtual: number | null,
+  parcelaTotal: number | null
+): void {
+  if (
+    parcelaAtual !== null &&
+    parcelaTotal !== null &&
+    parcelaAtual > parcelaTotal
+  ) {
+    throw new Error(
+      `Parcela atual (${parcelaAtual}) maior que o total de parcelas (${parcelaTotal}).`
+    );
+  }
+}
+
 function criarMapaColunas(
   colunas: string[]
 ): Partial<MapaColunas> {
@@ -235,21 +286,24 @@ function criarMapaColunas(
     ) {
       mapa.observacao = numeroColuna;
     }
-    if (
-  nome === "parcela atual" ||
-  nome === "parcela_atual" ||
-  nome === "parcela atual numero"
-) {
-  mapa.parcelaAtual = numeroColuna;
-}
 
-if (
-  nome === "parcela total" ||
-  nome === "parcela_total" ||
-  nome === "total parcelas"
-) {
-  mapa.parcelaTotal = numeroColuna;
-}
+    if (
+      nome === "parcela atual" ||
+      nome === "parcela_atual" ||
+      nome === "parcela"
+    ) {
+      mapa.parcelaAtual = numeroColuna;
+    }
+
+    if (
+      nome === "parcela total" ||
+      nome === "parcela_total" ||
+      nome === "total de parcelas" ||
+      nome === "total parcelas" ||
+      nome === "parcelas"
+    ) {
+      mapa.parcelaTotal = numeroColuna;
+    }
   });
 
   return mapa;
@@ -390,51 +444,26 @@ export async function converterExcelParaPreview(
             ).trim()
           : null;
 
-      const parcelaAtualBruta = mapaColunas.parcelaAtual
-      ? row.getCell(mapaColunas.parcelaAtual).value
-      : null;
+      const parcelaAtual = mapaColunas.parcelaAtual
+        ? normalizarParcela(
+            row.getCell(
+              mapaColunas.parcelaAtual
+            ).value,
+            "Parcela atual"
+          )
+        : null;
 
-    const parcelaTotalBruta = mapaColunas.parcelaTotal
-      ? row.getCell(mapaColunas.parcelaTotal).value
-      : null;
+      const parcelaTotal = mapaColunas.parcelaTotal
+        ? normalizarParcela(
+            row.getCell(
+              mapaColunas.parcelaTotal
+            ).value,
+            "Total de parcelas"
+          )
+        : null;
 
-    const parcelaAtualTexto =
-      valorCelulaParaString(parcelaAtualBruta).trim();
+      validarParcelas(parcelaAtual, parcelaTotal);
 
-    const parcelaTotalTexto =
-      valorCelulaParaString(parcelaTotalBruta).trim();
-
-    const parcelaAtual = parcelaAtualTexto
-      ? Number(parcelaAtualTexto)
-      : undefined;
-
-    const parcelaTotal = parcelaTotalTexto
-      ? Number(parcelaTotalTexto)
-      : undefined;
-
-    if (
-      parcelaAtual !== undefined &&
-      (!Number.isInteger(parcelaAtual) || parcelaAtual < 1)
-    ) {
-      throw new Error("Parcela atual inválida.");
-    }
-
-    if (
-      parcelaTotal !== undefined &&
-      (!Number.isInteger(parcelaTotal) || parcelaTotal < 1)
-    ) {
-      throw new Error("Parcela total inválida.");
-    }
-
-    if (
-      parcelaAtual !== undefined &&
-      parcelaTotal !== undefined &&
-      parcelaAtual > parcelaTotal
-    ) {
-      throw new Error(
-        "A parcela atual não pode ser maior que o total de parcelas."
-      );
-    }
       transacoes.push({
   data,
   estabelecimento,
@@ -448,10 +477,10 @@ export async function converterExcelParaPreview(
   ...(observacao
     ? { observacao }
     : {}),
-  ...(parcelaAtual !== undefined
+  ...(parcelaAtual !== null
     ? { parcelaAtual }
     : {}),
-  ...(parcelaTotal !== undefined
+  ...(parcelaTotal !== null
     ? { parcelaTotal }
     : {}),
 });
@@ -505,7 +534,7 @@ export async function confirmarImportacao(
     erro: string;
   }[] = [];
 
-  const valoresParaInserir = [];
+  const valoresParaInserir: NovaTransacao[] = [];
 
   for (
     let i = 0;
@@ -551,6 +580,18 @@ export async function confirmarImportacao(
         }
       }
 
+      const parcelaAtual = normalizarParcela(
+        transacao.parcelaAtual,
+        "Parcela atual"
+      );
+
+      const parcelaTotal = normalizarParcela(
+        transacao.parcelaTotal,
+        "Total de parcelas"
+      );
+
+      validarParcelas(parcelaAtual, parcelaTotal);
+
       valoresParaInserir.push({
         contaId,
         data: transacao.data,
@@ -562,9 +603,9 @@ export async function confirmarImportacao(
         categoriaId,
         observacao:
           transacao.observacao ?? null,
-          parcelaAtual: transacao.parcelaAtual ?? null,
-          parcelaTotal: transacao.parcelaTotal ?? null,
-          origem: "manual",
+        parcelaAtual,
+        parcelaTotal,
+        origem: "manual",
       });
     } catch (error) {
       erros.push({
@@ -577,17 +618,17 @@ export async function confirmarImportacao(
     }
   }
 
-  if (valoresParaInserir.length > 0) {
-    await db
-      .insert(transacoes)
-      .values(valoresParaInserir);
-  }
+  const resultadoInsercao =
+    await inserirTransacoesSemDuplicidade(
+      valoresParaInserir
+    );
 
+  // "ignoradas" = linhas inválidas + linhas duplicadas
   return {
     total: transacoesImportadas.length,
-    inseridas: valoresParaInserir.length,
-    ignoradas: erros.length,
+    inseridas: resultadoInsercao.inseridas,
+    ignoradas:
+      erros.length + resultadoInsercao.ignoradas,
     erros,
   };
 }
-

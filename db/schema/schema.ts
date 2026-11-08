@@ -216,6 +216,10 @@ export const transacoes = pgTable(
     estabelecimentoBruto: text("estabelecimento_bruto")
       .notNull(),
 
+    // Nome normalizado (normalizarParaBusca), usado na prevenção de duplicidades
+    estabelecimentoNormalizado: text("estabelecimento_normalizado")
+      .notNull(),
+
     // Estabelecimento identificado pelo nosso sistema
     estabelecimentoId: integer("estabelecimento_id")
       .references(() => estabelecimentos.id),
@@ -266,8 +270,85 @@ export const transacoes = pgTable(
       table.contaId,
       table.idPluggy
     ),
+
+    // Prevenção de duplicidades: mesma conta, data,
+    // estabelecimento normalizado e valor (com sinal)
+    uniqueIndex("transacao_duplicidade_unique").on(
+      table.contaId,
+      table.data,
+      table.estabelecimentoNormalizado,
+      table.valor
+    ),
   ]
 );
+
+// =============================================
+// RENDAS MENSAIS
+// Uma renda mensal por usuário
+// =============================================
+
+export const rendasMensais = pgTable("rendas_mensais", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  usuarioId: uuid("usuario_id")
+    .references(() => usuarios.id, {
+      onDelete: "cascade",
+    })
+    .notNull()
+    .unique(),
+
+  valor: numeric("valor", {
+    precision: 10,
+    scale: 2,
+  }).notNull(),
+
+  atualizadoEm: timestamp("atualizado_em", {
+    withTimezone: true,
+  })
+    .notNull()
+    .defaultNow(),
+});
+
+// =============================================
+// METAS FINANCEIRAS
+// Cada meta pertence a um usuário
+// =============================================
+
+export const metasFinanceiras = pgTable("metas_financeiras", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  usuarioId: uuid("usuario_id")
+    .references(() => usuarios.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+
+  nome: text("nome").notNull(),
+
+  valorDesejado: numeric("valor_desejado", {
+    precision: 10,
+    scale: 2,
+  }).notNull(),
+
+  valorAcumulado: numeric("valor_acumulado", {
+    precision: 10,
+    scale: 2,
+  })
+    .notNull()
+    .default("0"),
+
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+  })
+    .notNull()
+    .defaultNow(),
+
+  atualizadoEm: timestamp("atualizado_em", {
+    withTimezone: true,
+  })
+    .notNull()
+    .defaultNow(),
+});
 
 // =============================================
 // RELACOES - USUARIOS
@@ -275,10 +356,40 @@ export const transacoes = pgTable(
 
 export const usuariosRelations = relations(
   usuarios,
-  ({ many }) => ({
+  ({ one, many }) => ({
     conexoesBancarias: many(conexoesBancarias),
     cartoes: many(cartoes),
     regrasCategorizacao: many(regrasCategorizacao),
+    rendaMensal: one(rendasMensais),
+    metasFinanceiras: many(metasFinanceiras),
+  })
+);
+
+// =============================================
+// RELACOES - METAS FINANCEIRAS
+// =============================================
+
+export const metasFinanceirasRelations = relations(
+  metasFinanceiras,
+  ({ one }) => ({
+    usuario: one(usuarios, {
+      fields: [metasFinanceiras.usuarioId],
+      references: [usuarios.id],
+    }),
+  })
+);
+
+// =============================================
+// RELACOES - RENDAS MENSAIS
+// =============================================
+
+export const rendasMensaisRelations = relations(
+  rendasMensais,
+  ({ one }) => ({
+    usuario: one(usuarios, {
+      fields: [rendasMensais.usuarioId],
+      references: [usuarios.id],
+    }),
   })
 );
 

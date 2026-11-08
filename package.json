@@ -1,12 +1,12 @@
 {
   "name": "appscriptsfinance",
   "version": "1.0.0",
-  "description": "Automação para registro rápido de gastos utilizando Atalhos do iOS, Google Apps Script e Google Sheets.",
+  "description": "Automação para registro rápido de gastos utilizando Atalhos do iOS, e DB para guardar os dados.",
   "type": "module",
   "main": "Scripts.js",
   "scripts": {
-    "dev": "tsx watch controller.ts",
-    "start": "tsx controller.ts",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",  
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:login": "tsx src/auth/test-login.ts login",
     "test:register": "tsx src/auth/test-login.ts registro",
@@ -14,26 +14,30 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:normalizar-transacoes": "tsx db/scripts/normalizar-transacoes.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
-    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
+    "exceljs": "^4.4.0",
     "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3"
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.3.0"
   },
   "devDependencies": {
-    "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^26.2.0",
+    "@types/multer": "^2.2.0",
+    "@types/node": "^26.4.1",
     "drizzle-kit": "^0.31.10",
     "tsx": "^4.23.12",
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.0",
+    "wrangler": "^4.129.0"
   }
 }
