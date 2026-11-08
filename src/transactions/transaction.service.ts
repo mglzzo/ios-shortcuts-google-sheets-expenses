@@ -19,8 +19,17 @@ import {
   eq,
 } from "drizzle-orm";
 
+import {
+  inserirTransacoesSemDuplicidade,
+  normalizarEstabelecimento,
+} from "./transaction-deduplication.service.js";
+
 export async function listarTransacoes(
-  usuarioId: string
+  usuarioId: string,
+  filtros: {
+    contaId?: string;
+    estabelecimento?: string;
+  } = {}
 ) {
   return db
     .select({
@@ -70,9 +79,22 @@ export async function listarTransacoes(
       )
     )
     .where(
-      eq(
-        conexoesBancarias.usuarioId,
-        usuarioId
+      and(
+        eq(
+          conexoesBancarias.usuarioId,
+          usuarioId
+        ),
+        filtros.contaId
+          ? eq(transacoes.contaId, filtros.contaId)
+          : undefined,
+        filtros.estabelecimento
+          ? eq(
+              transacoes.estabelecimentoNormalizado,
+              normalizarEstabelecimento(
+                filtros.estabelecimento
+              )
+            )
+          : undefined
       )
     )
     .orderBy(
@@ -156,9 +178,8 @@ export async function criarTransacaoManual(
 ) {
   const contaId = await obterOuCriarContaManual(usuarioId);
 
-  const [transacao] = await db
-    .insert(transacoes)
-    .values({
+  const resultado = await inserirTransacoesSemDuplicidade([
+    {
       contaId,
       data: dados.data,
       estabelecimentoBruto: dados.estabelecimento,
@@ -167,12 +188,13 @@ export async function criarTransacaoManual(
       categoriaId: dados.categoriaId,
       observacao: dados.observacao ?? null,
       origem: "manual",
-    })
-    .returning();
+    },
+  ]);
 
-  if (!transacao) {
-    throw new Error("Erro ao criar transação manual.");
-  }
-
-  return transacao;
+  return {
+    total: resultado.total,
+    inseridas: resultado.inseridas,
+    ignoradas: resultado.ignoradas,
+    transacao: resultado.transacoesInseridas[0] ?? null,
+  };
 }

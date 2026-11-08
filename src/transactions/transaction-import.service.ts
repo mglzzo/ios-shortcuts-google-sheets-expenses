@@ -4,8 +4,10 @@ import {obterOuCriarContaManual} from "./transaction.service.js";
 import {
   buscarCategoriaIdPorNome,
 } from "../../categorizar.js";
-import{db} from "../../db/client/Client.js";
-import {transacoes} from "../../db/schema/schema.js";   
+import {
+  inserirTransacoesSemDuplicidade,
+  type NovaTransacao,
+} from "./transaction-deduplication.service.js";
 export interface TransacaoImportada {
   data: string;
   estabelecimento: string;
@@ -532,7 +534,7 @@ export async function confirmarImportacao(
     erro: string;
   }[] = [];
 
-  const valoresParaInserir = [];
+  const valoresParaInserir: NovaTransacao[] = [];
 
   for (
     let i = 0;
@@ -616,16 +618,17 @@ export async function confirmarImportacao(
     }
   }
 
-  if (valoresParaInserir.length > 0) {
-    await db
-      .insert(transacoes)
-      .values(valoresParaInserir);
-  }
-  
+  const resultadoInsercao =
+    await inserirTransacoesSemDuplicidade(
+      valoresParaInserir
+    );
+
+  // "ignoradas" = linhas inválidas + linhas duplicadas
   return {
     total: transacoesImportadas.length,
-    inseridas: valoresParaInserir.length,
-    ignoradas: erros.length,
+    inseridas: resultadoInsercao.inseridas,
+    ignoradas:
+      erros.length + resultadoInsercao.ignoradas,
     erros,
   };
 }

@@ -2,8 +2,11 @@ import { db } from "../../db/client/Client.js";
 import "dotenv/config";
 import {
   contas,
-  transacoes,
 } from "../../db/schema/schema.js";
+import {
+  inserirTransacoesSemDuplicidade,
+  type NovaTransacao,
+} from "../transactions/transaction-deduplication.service.js";
 
 const URL_PLUGGY = process.env.URL_PLUGGY;
 const PLUGGY_CLIENT_ID = process.env.PLUGGY_CLIENT_ID;
@@ -221,62 +224,49 @@ export async function getAccount(
 async function salvarTransacoes(
   contaId: string,
   transacoesPluggy: PluggyTransaction[]
-): Promise<number> {
+): Promise<{ inseridas: number; ignoradas: number }> {
+  const valores: NovaTransacao[] = transacoesPluggy.map(
+    (transacao) => ({
+      contaId,
 
-  let totalInseridas = 0;
+      data: transacao.date.slice(0, 10),
 
-  for (const transacao of transacoesPluggy) {
+      estabelecimentoBruto:
+        transacao.descriptionRaw ??
+        transacao.description ??
+        "Sem descrição",
 
-    const resultado = await db
-      .insert(transacoes)
-      .values({
-        contaId,
+      metodoPagamento:
+        transacao.operationType ??
+        transacao.type,
 
-        data: transacao.date.slice(0, 10),
+      categoriaId: null,
 
-        estabelecimentoBruto:
-          transacao.descriptionRaw ??
-          transacao.description ??
-          "Sem descrição",
+      categoriaPluggy:
+        transacao.category,
 
-        metodoPagamento:
-          transacao.operationType ??
-          transacao.type,
+      categoriaPluggyId:
+        transacao.categoryId,
 
-        categoriaId: null,
+      valor: transacao.amount.toFixed(2),
 
-        categoriaPluggy:
-          transacao.category,
+      estabelecimentoId: null,
 
-        categoriaPluggyId:
-          transacao.categoryId,
+      bancoCartaoId: null,
 
-        valor: transacao.amount.toFixed(2),
+      origem: "pluggy",
 
-        estabelecimentoId: null,
+      idPluggy: transacao.id,
+    })
+  );
 
-        bancoCartaoId: null,
+  const resultado =
+    await inserirTransacoesSemDuplicidade(valores);
 
-        origem: "pluggy",
-
-        idPluggy: transacao.id,
-      })
-      .onConflictDoNothing({
-        target: [
-          transacoes.contaId,
-          transacoes.idPluggy,
-        ],
-      })
-      .returning({
-        id: transacoes.id,
-      });
-
-    if (resultado.length > 0) {
-      totalInseridas++;
-    }
-  }
-
-  return totalInseridas; // ← ISSO QUE ESTAVA FALTANDO
+  return {
+    inseridas: resultado.inseridas,
+    ignoradas: resultado.ignoradas,
+  };
 }
 
 
@@ -294,6 +284,7 @@ export async function getTransactions(
 
   let totalRecebidas = 0;
   let totalInseridas = 0;
+  let totalIgnoradas = 0;
   while (urlAtual) {
     const response = await fetch(urlAtual, {
       method: "GET",
@@ -314,12 +305,13 @@ export async function getTransactions(
 
     totalRecebidas += data.results.length;
 
-    const inseridas = await salvarTransacoes(
+    const resultado = await salvarTransacoes(
       conta.id,
       data.results
     );
 
-    totalInseridas += inseridas;
+    totalInseridas += resultado.inseridas;
+    totalIgnoradas += resultado.ignoradas;
 if (data.next) {
       urlAtual =
         `${URL_PLUGGY}/v2/transactions${data.next}`;
@@ -330,11 +322,12 @@ if (data.next) {
   }
 
   console.log(
-    `${totalRecebidas} recebidas / ${totalInseridas} novas inseridas`
+    `${totalRecebidas} recebidas / ${totalInseridas} novas inseridas / ${totalIgnoradas} ignoradas`
   );
 
   return {
     totalRecebidas,
     totalInseridas,
+    totalIgnoradas,
   };
 }

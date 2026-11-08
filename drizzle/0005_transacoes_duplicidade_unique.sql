@@ -1,0 +1,2 @@
+ALTER TABLE "transacoes" ALTER COLUMN "estabelecimento_normalizado" SET NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "transacao_duplicidade_unique" ON "transacoes" USING btree ("conta_id","data","estabelecimento_normalizado","valor");

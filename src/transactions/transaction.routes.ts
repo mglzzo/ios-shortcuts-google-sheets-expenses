@@ -18,6 +18,8 @@ import {
   type TransacaoImportada,
 } from "./transaction-import.service.js";
 
+import { ehUuid } from "../shared/validacao.js";
+
 import multer from "multer";
 const router = Router();
 
@@ -33,9 +35,33 @@ router.get(
       const usuarioId =
         req.user!.userId;
 
+      const filtros: {
+        contaId?: string;
+        estabelecimento?: string;
+      } = {};
+
+      if (req.query.contaId !== undefined) {
+        if (!ehUuid(req.query.contaId)) {
+          return res.status(400).json({
+            erro: "contaId inválido.",
+          });
+        }
+
+        filtros.contaId = req.query.contaId;
+      }
+
+      if (
+        typeof req.query.estabelecimento === "string" &&
+        req.query.estabelecimento.trim()
+      ) {
+        filtros.estabelecimento =
+          req.query.estabelecimento.trim();
+      }
+
       const transacoes =
         await listarTransacoes(
-          usuarioId
+          usuarioId,
+          filtros
         );
 
       return res.json(
@@ -118,7 +144,19 @@ router.post("/manual", autenticar, async (req: RequestAutenticada, res) => {
 
     console.log("RESULTADO SERVICE:", resultado);
 
-    return res.status(201).json(resultado);
+    const { transacao, ...contagem } = resultado;
+
+    if (!transacao) {
+      return res.status(200).json({
+        ...contagem,
+        mensagem: "Transação duplicada ignorada.",
+      });
+    }
+
+    return res.status(201).json({
+      ...transacao,
+      ...contagem,
+    });
   } catch (error) {
     console.error("ERRO MANUAL:", error);
 
