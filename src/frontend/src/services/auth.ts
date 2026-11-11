@@ -107,6 +107,5 @@ export async function getMe(): Promise<Usuario> {
       result?.erro || 'Sua sessão expirou.',
     )
   }
-
   return result
 }
