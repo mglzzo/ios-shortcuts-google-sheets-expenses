@@ -9,6 +9,7 @@ export interface MetaFinanceira {
   nome: string;
   valorDesejado: number;
   valorAcumulado: number;
+  dataAlvo: string | null;
   percentualConcluido: number;
   createdAt: Date;
   atualizadoEm: Date;
@@ -29,6 +30,7 @@ function paraResposta(meta: MetaBanco): MetaFinanceira {
     nome: meta.nome,
     valorDesejado,
     valorAcumulado,
+    dataAlvo: meta.dataAlvo,
     percentualConcluido,
     createdAt: meta.createdAt,
     atualizadoEm: meta.atualizadoEm,
@@ -53,6 +55,7 @@ export async function criarMeta(
     nome: string;
     valorDesejado: number;
     valorAcumulado: number;
+    dataAlvo: string;
   }
 ): Promise<MetaFinanceira> {
   const [meta] = await db
@@ -62,6 +65,7 @@ export async function criarMeta(
       nome: dados.nome,
       valorDesejado: dados.valorDesejado.toFixed(2),
       valorAcumulado: dados.valorAcumulado.toFixed(2),
+      dataAlvo: dados.dataAlvo,
     })
     .returning();
 
@@ -81,6 +85,7 @@ export async function atualizarMeta(
     nome?: string;
     valorDesejado?: number;
     valorAcumulado?: number;
+    dataAlvo?: string;
   }
 ): Promise<MetaFinanceira | null> {
   const alteracoes: Partial<typeof metasFinanceiras.$inferInsert> =
@@ -98,6 +103,10 @@ export async function atualizarMeta(
 
   if (dados.valorAcumulado !== undefined) {
     alteracoes.valorAcumulado = dados.valorAcumulado.toFixed(2);
+  }
+
+  if (dados.dataAlvo !== undefined) {
+    alteracoes.dataAlvo = dados.dataAlvo;
   }
 
   const [meta] = await db

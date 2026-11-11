@@ -29,6 +29,17 @@ function lerNome(valor: unknown): string | null {
   return nome ? nome : null;
 }
 
+function lerDataAlvo(valor: unknown): string | null {
+  if (typeof valor !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+    return null;
+  }
+
+  const data = new Date(`${valor}T00:00:00.000Z`);
+  return !Number.isNaN(data.getTime()) && data.toISOString().slice(0, 10) === valor
+    ? valor
+    : null;
+}
+
 router.get(
   "/",
   autenticar,
@@ -62,6 +73,11 @@ router.post(
         });
       }
 
+      const dataAlvo = lerDataAlvo(corpo.dataAlvo);
+      if (!dataAlvo) {
+        return res.status(400).json({ erro: "dataAlvo é obrigatória e deve estar no formato YYYY-MM-DD." });
+      }
+
       const valorDesejado = lerValorMonetario(
         corpo.valorDesejado
       );
@@ -90,6 +106,7 @@ router.post(
         nome,
         valorDesejado,
         valorAcumulado,
+        dataAlvo,
       });
 
       return res.status(201).json(meta);
@@ -122,6 +139,7 @@ router.patch(
         nome?: string;
         valorDesejado?: number;
         valorAcumulado?: number;
+        dataAlvo?: string;
       } = {};
 
       if (corpo.nome !== undefined) {
@@ -134,6 +152,14 @@ router.patch(
         }
 
         dados.nome = nome;
+      }
+
+      if (corpo.dataAlvo !== undefined) {
+        const dataAlvo = lerDataAlvo(corpo.dataAlvo);
+        if (!dataAlvo) {
+          return res.status(400).json({ erro: "dataAlvo inválida. Informe uma data no formato YYYY-MM-DD." });
+        }
+        dados.dataAlvo = dataAlvo;
       }
 
       if (corpo.valorDesejado !== undefined) {
@@ -162,7 +188,7 @@ router.patch(
 
       if (Object.keys(dados).length === 0) {
         return res.status(400).json({
-          erro: "Informe ao menos um campo: nome, valorDesejado ou valorAcumulado.",
+          erro: "Informe ao menos um campo: nome, valorDesejado, valorAcumulado ou dataAlvo.",
         });
       }
 

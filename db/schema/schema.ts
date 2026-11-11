@@ -337,6 +337,8 @@ export const metasFinanceiras = pgTable("metas_financeiras", {
     .notNull()
     .default("0"),
 
+  dataAlvo: date("data_alvo"),
+
   createdAt: timestamp("created_at", {
     withTimezone: true,
   })

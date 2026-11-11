@@ -57,6 +57,13 @@
       "when": 1794099581347,
       "tag": "0007_metas_financeiras",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794340000000,
+      "tag": "0008_metas_financeiras_data_alvo",
+      "breakpoints": true
     }
   ]
 }
