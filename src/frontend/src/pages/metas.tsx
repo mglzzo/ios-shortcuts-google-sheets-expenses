@@ -1,5 +1,6 @@
 
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { createGoal, deleteGoal, getGoals, updateGoal, type MetaAPI } from '../services/metas'
 import {
   ArrowLeft,
   ArrowRight,
@@ -18,7 +19,7 @@ import MainLayout from '../../components/layout/MainLayout'
 type IconeMeta = 'reserva' | 'viagem' | 'notebook' | 'casa'
 
 interface Meta {
-  id: number
+  id: string
   nome: string
   descricao: string
   icone: IconeMeta
@@ -66,9 +67,13 @@ const formatarPrazo = (prazo: string) => {
 
 function Metas() {
   const [metas, setMetas] = useState<Meta[]>([])
+  const [carregando, setCarregando] = useState(true)
+  const [salvando, setSalvando] = useState(false)
+  const [metaEmEdicao, setMetaEmEdicao] = useState<string | null>(null)
+  const [erro, setErro] = useState('')
   const [criandoMeta, setCriandoMeta] = useState(false)
   const [metaSelecionada, setMetaSelecionada] = useState<Meta | null>(null)
-  const [menuAberto, setMenuAberto] = useState<number | null>(null)
+  const [menuAberto, setMenuAberto] = useState<string | null>(null)
 
   const [formulario, setFormulario] = useState({
     nome: '',
@@ -79,6 +84,50 @@ function Metas() {
     prazo: '',
     cor: '#8055f5',
   })
+
+  useEffect(() => {
+    let ativo = true
+
+    async function carregarMetas() {
+      try {
+        setCarregando(true)
+        setErro('')
+
+        const resultado = await getGoals()
+
+        if (!ativo) return
+
+        setMetas(
+          resultado.map((meta: MetaAPI) => ({
+            id: String(meta.id),
+            nome: meta.nome,
+            descricao: '',
+            icone: 'reserva',
+            valorAtual: Number(meta.valorAcumulado) || 0,
+            valorObjetivo: Number(meta.valorDesejado) || 0,
+            prazo: meta.dataAlvo ?? '',
+            cor: '#8055f5',
+          })),
+        )
+      } catch (erroCarregamento) {
+        if (ativo) {
+          setErro(
+            erroCarregamento instanceof Error
+              ? erroCarregamento.message
+              : 'Não foi possível carregar suas metas.',
+          )
+        }
+      } finally {
+        if (ativo) setCarregando(false)
+      }
+    }
+
+    carregarMetas()
+
+    return () => {
+      ativo = false
+    }
+  }, [])
 
   const corSelecionada =
     cores.find((cor) => cor.valor === formulario.cor) ?? cores[0]
@@ -106,6 +155,7 @@ function Metas() {
   }
 
   function abrirCriacao() {
+    setMetaEmEdicao(null)
     setFormulario({
       nome: '',
       descricao: '',
@@ -119,7 +169,24 @@ function Metas() {
     setCriandoMeta(true)
   }
 
-  function criarMeta(event: FormEvent<HTMLFormElement>) {
+  function abrirEdicao(meta: Meta) {
+    setFormulario({
+      nome: meta.nome,
+      descricao: meta.descricao,
+      icone: meta.icone,
+      valorAtual: String(meta.valorAtual),
+      valorObjetivo: String(meta.valorObjetivo),
+      prazo: meta.prazo,
+      cor: meta.cor,
+    })
+    setMetaEmEdicao(meta.id)
+    setMetaSelecionada(null)
+    setMenuAberto(null)
+    setErro('')
+    setCriandoMeta(true)
+  }
+
+  async function criarMeta(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     const nome = formulario.nome.trim()
@@ -136,36 +203,93 @@ function Metas() {
       return
     }
 
-    const novaMeta: Meta = {
-      id: Date.now(),
-      nome,
-      descricao: formulario.descricao.trim(),
-      icone: formulario.icone,
-      valorAtual: atual,
-      valorObjetivo: objetivo,
-      prazo: formulario.prazo,
-      cor: formulario.cor,
-    }
+    try {
+      setSalvando(true)
+      setErro('')
 
-    setMetas((anteriores) => [...anteriores, novaMeta])
-    setCriandoMeta(false)
+      const dados = {
+        nome,
+        valorDesejado: objetivo,
+        valorAcumulado: atual,
+        dataAlvo: formulario.prazo || null,
+      }
+
+      if (metaEmEdicao) {
+        const metaAtualizada = await updateGoal(metaEmEdicao, dados)
+        setMetas((anteriores) =>
+          anteriores.map((meta) =>
+            meta.id === metaEmEdicao
+              ? {
+                  ...meta,
+                  nome: metaAtualizada.nome,
+                  valorAtual: Number(metaAtualizada.valorAcumulado) || 0,
+                  valorObjetivo: Number(metaAtualizada.valorDesejado) || 0,
+                  prazo: metaAtualizada.dataAlvo ?? formulario.prazo,
+                }
+              : meta,
+          ),
+        )
+      } else {
+        const metaCriada = await createGoal(dados)
+
+        const novaMeta: Meta = {
+          id: String(metaCriada.id),
+          nome: metaCriada.nome,
+          descricao: formulario.descricao.trim(),
+          icone: formulario.icone,
+          valorAtual: Number(metaCriada.valorAcumulado) || 0,
+          valorObjetivo: Number(metaCriada.valorDesejado) || 0,
+          prazo: metaCriada.dataAlvo ?? formulario.prazo,
+          cor: formulario.cor,
+        }
+
+        setMetas((anteriores) => [...anteriores, novaMeta])
+      }
+
+      setMetaEmEdicao(null)
+      setCriandoMeta(false)
+    } catch (erroCriacao) {
+      setErro(
+        erroCriacao instanceof Error
+          ? erroCriacao.message
+          : 'Não foi possível criar a meta.',
+      )
+    } finally {
+      setSalvando(false)
+    }
   }
 
-  function excluirMeta(id: number) {
-    setMetas((anteriores) =>
-      anteriores.filter((meta) => meta.id !== id),
-    )
+  async function excluirMeta(id: string) {
+    try {
+      setErro('')
+      await deleteGoal(id)
 
-    setMenuAberto(null)
+      setMetas((anteriores) =>
+        anteriores.filter((meta) => meta.id !== id),
+      )
 
-    if (metaSelecionada?.id === id) {
-      setMetaSelecionada(null)
+      setMenuAberto(null)
+
+      if (metaSelecionada?.id === id) {
+        setMetaSelecionada(null)
+      }
+    } catch (erroExclusao) {
+      setErro(
+        erroExclusao instanceof Error
+          ? erroExclusao.message
+          : 'Não foi possível excluir a meta.',
+      )
     }
   }
 
   return (
     <MainLayout>
       <div className="min-h-screen w-full min-w-0 bg-transparent px-5 py-6 text-[#17213b] sm:px-7 lg:px-8 xl:px-10">
+        {erro && (
+          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {erro}
+          </div>
+        )}
         {criandoMeta ? (
           <div className="w-full max-w-none">
             <button
@@ -179,7 +303,7 @@ function Metas() {
 
             <div className="mb-7">
               <h1 className="text-[28px] font-bold tracking-tight text-[#101b38] sm:text-[32px]">
-                Criar nova meta
+                {metaEmEdicao ? 'Editar meta' : 'Criar nova meta'}
               </h1>
 
               <p className="mt-1 text-base text-[#71809e]">
@@ -447,10 +571,11 @@ function Metas() {
 
                 <button
                   type="submit"
-                  className="flex h-12 items-center justify-center gap-2 rounded-xl bg-[#7950f5] px-8 text-sm font-semibold text-white shadow-[0_5px_14px_rgba(117,77,245,0.18)] transition hover:bg-[#6740df]"
+                  disabled={salvando}
+                  className="flex h-12 items-center justify-center gap-2 rounded-xl bg-[#7950f5] px-8 text-sm font-semibold text-white shadow-[0_5px_14px_rgba(117,77,245,0.18)] transition hover:bg-[#6740df] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Plus size={18} />
-                  Criar meta
+                  {salvando ? 'Salvando...' : metaEmEdicao ? 'Salvar alterações' : 'Criar meta'}
                 </button>
               </div>
             </form>
@@ -492,7 +617,11 @@ function Metas() {
                 </span>
               </div>
 
-              {metas.length === 0 ? (
+              {carregando ? (
+                <div className="rounded-2xl border border-[#eeeef2] bg-white px-5 py-12 text-center text-sm text-[#71809e]">
+                  Carregando suas metas...
+                </div>
+              ) : metas.length === 0 ? (
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#dcd5ef] bg-white px-5 py-16 text-center">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f0ebff] text-[#7950f5]">
                     <Target size={30} />
@@ -584,6 +713,14 @@ function Metas() {
                                   className="w-full rounded-lg px-3 py-2 text-left text-xs text-[#34415f] hover:bg-[#f5f2ff]"
                                 >
                                   Ver detalhes
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => abrirEdicao(meta)}
+                                  className="w-full rounded-lg px-3 py-2 text-left text-xs text-[#34415f] hover:bg-[#f5f2ff]"
+                                >
+                                  Editar meta
                                 </button>
 
                                 <button

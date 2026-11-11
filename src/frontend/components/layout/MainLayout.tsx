@@ -17,9 +17,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         onClose={() => setMobileOpen(false)}
       />
 
-      {/* Área principal */}
       <main className="min-h-screen w-full min-w-0 md:ml-[238px] md:w-[calc(100%-238px)]">
-        
         <div className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-[#e9eaf1] bg-white px-5 md:hidden">
           <button
             type="button"
@@ -30,8 +28,14 @@ export default function MainLayout({ children }: MainLayoutProps) {
             <Menu size={24} />
           </button>
 
+          <img
+            src="/camelia-icon-shield.png"
+            alt="Camélia"
+            className="h-9 w-9 object-contain"
+          />
+
           <span className="text-[17px] font-bold text-[#172b4d]">
-            FinlyApp
+            Camélia
           </span>
         </div>
 

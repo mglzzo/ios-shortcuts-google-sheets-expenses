@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react'
 import {
   Home,
@@ -23,6 +24,7 @@ interface PreferenciasPerfil {
 }
 
 const CHAVE_CONFIGURACAO_PERFIL = 'finly_configuracao_perfil'
+const LOGO_CAMELIA = '/camelia-icon-shield.png'
 
 const avatares: Record<string, string> = {
   roxo: '/porquinho.png',
@@ -76,9 +78,7 @@ export default function Sidebar({
   useEffect(() => {
     const atualizarAvatar = () => setAvatarSrc(carregarAvatar())
 
-    // O evento personalizado atualiza a Sidebar na mesma aba.
     window.addEventListener('finly-perfil-atualizado', atualizarAvatar)
-    // O evento storage cobre alterações feitas em outra aba.
     window.addEventListener('storage', atualizarAvatar)
 
     return () => {
@@ -128,13 +128,15 @@ export default function Sidebar({
           md:translate-x-0
         `}
       >
-        <div className="flex h-[92px] shrink-0 items-center justify-center gap-2 px-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-[10px] bg-[#a58aff] text-[23px] font-extrabold text-[#172b4d]">
-            F
-          </div>
+        <div className="flex h-[92px] shrink-0 items-center justify-start gap-3 px-4">
+          <img
+            src={LOGO_CAMELIA}
+            alt="Logo Camélia"
+            className="h-12 w-12 shrink-0 object-contain"
+          />
 
           <span className="text-[20px] font-bold tracking-tight">
-            FinlyApp
+            Camélia
           </span>
 
           <button

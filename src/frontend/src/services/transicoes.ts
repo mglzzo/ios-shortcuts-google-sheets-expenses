@@ -1,3 +1,4 @@
+
 const API_URL =
   'https://ios-shortcuts-db-expenses.martinsmiguel90.workers.dev'
 
@@ -272,6 +273,63 @@ export async function getTransactions(
   }
 
   return extrairResposta(result, page, limit)
+}
+
+export async function getCategories(): Promise<string[]> {
+  const token = localStorage.getItem('token')
+
+  if (!token) {
+    throw new Error('Usuário não autenticado.')
+  }
+
+  const response = await fetch(`${API_URL}/categories`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  })
+
+  const result = await lerResposta(response)
+
+  if (!response.ok) {
+    const objeto = result as Record<string, unknown>
+
+    throw new Error(
+      String(
+        objeto.erro ||
+          objeto.error ||
+          objeto.mensagem ||
+          'Não foi possível consultar as categorias.',
+      ),
+    )
+  }
+
+  const objeto = result as { data?: unknown }
+
+  if (!Array.isArray(objeto.data)) {
+    throw new Error('Resposta inválida ao consultar categorias.')
+  }
+
+  return objeto.data
+    .map((categoria): string => {
+      if (typeof categoria === 'string') {
+        return categoria.trim().toLocaleUpperCase('pt-BR')
+      }
+
+      if (categoria && typeof categoria === 'object') {
+        const item = categoria as Record<string, unknown>
+
+        const nome = item.nome ?? item.name
+
+        return typeof nome === 'string'
+          ? nome.trim().toLocaleUpperCase('pt-BR')
+          : ''
+      }
+
+      return ''
+    })
+    .filter(Boolean)
 }
 
 export async function importarTransacoes(

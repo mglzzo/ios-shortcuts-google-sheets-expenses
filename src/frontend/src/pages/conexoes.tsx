@@ -63,7 +63,7 @@ function Conexoes() {
             </h1>
 
             <p className="mt-2 max-w-xl text-[16px] leading-6 text-[#77839e] sm:text-[18px]">
-              Escolha como suas movimentações serão conectadas ao FinlyApp.
+              Escolha como suas movimentações serão conectadas ao Camélia.
             </p>
           </div>
 
@@ -91,7 +91,7 @@ function Conexoes() {
               </h2>
 
               <p className="mt-2 max-w-lg text-[15px] leading-6 text-[#77839e]">
-                Conecte suas contas bancárias e cartões diretamente ao FinlyApp
+                Conecte suas contas bancárias e cartões diretamente ao Camélia
                 e acompanhe suas movimentações automaticamente.
               </p>
 
@@ -179,7 +179,7 @@ function Conexoes() {
 
             <p className="mt-3 text-[15px] leading-6 text-[#77839e]">
               Estamos trabalhando para trazer a conexão bancária automática
-              ao FinlyApp, permitindo integrar suas contas e acompanhar suas
+              ao Camélia, permitindo integrar suas contas e acompanhar suas
               movimentações com mais praticidade.
             </p>
 

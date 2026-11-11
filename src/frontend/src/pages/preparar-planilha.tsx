@@ -309,7 +309,7 @@ function PrepararPlanilha() {
                                 </h2>
 
                                 <p className="mt-2 text-sm leading-5 text-[#7d8aa5]">
-                                    Essas configurações ajudam o FinlyApp a interpretar
+                                    Essas configurações ajudam o Camélia a interpretar
                                     corretamente as informações da sua planilha.
                                 </p>
 
@@ -436,8 +436,8 @@ function PrepararPlanilha() {
                                                 </p>
 
                                                 <p className="mt-1 text-xs leading-5 text-[#65718b]">
-                                                    Representa um valor a pagar posteriormente, como
-                                                    uma compra realizada no cartão de crédito.
+                                                    Representa uma entrada de dinheiro na sua conta,
+                                                    como salário, Pix recebido ou transferência recebida.
                                                 </p>
                                             </div>
 
@@ -447,9 +447,8 @@ function PrepararPlanilha() {
                                                 </p>
 
                                                 <p className="mt-1 text-xs leading-5 text-[#65718b]">
-                                                    Representa uma entrada de dinheiro já recebida,
-                                                    como um Pix recebido, salário ou transferência
-                                                    recebida.
+                                                    Representa uma saída de dinheiro da sua conta,
+                                                    como compras, contas, pagamentos e despesas em geral.
                                                 </p>
                                             </div>
 
@@ -459,10 +458,11 @@ function PrepararPlanilha() {
                                                 </p>
 
                                                 <p className="mt-1 text-xs leading-5 text-[#65718b]">
-                                                    Utilize o sinal negativo somente para identificar
-                                                    valores que já entraram na sua conta. Não remova o
-                                                    sinal dos valores negativos, pois ele é utilizado
-                                                    pelo sistema para identificar as entradas.
+                                                    Utilize valores negativos para identificar despesas
+                                                    e valores positivos para identificar receitas.
+                                                    Não remova o sinal dos valores negativos, pois ele
+                                                    é utilizado pelo sistema para classificar corretamente
+                                                    as movimentações.
                                                 </p>
                                             </div>
                                         </div>

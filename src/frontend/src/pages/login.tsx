@@ -39,12 +39,15 @@ function Login() {
         <div className="pointer-events-none absolute -bottom-28 -left-16 h-56 w-56 rounded-full border border-white/10" />
 
         <div className="relative flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#9274f5] text-lg font-bold text-[#172b4d]">
-            F
-          </div>
-          <span className="text-[18px] font-semibold tracking-tight">FinlyApp</span>
+          <img
+            src="/camelia-icon-shield.png"
+            alt="Logo Camélia"
+            className="h-12 w-12 shrink-0 object-contain"
+          />
+          <span className="text-[20px] font-bold tracking-tight">
+            Camélia
+          </span>
         </div>
-
       </aside>
 
       <section className="flex min-h-[calc(100vh-112px)] items-center justify-center px-5 py-10 sm:px-8 lg:min-h-screen lg:px-10">
