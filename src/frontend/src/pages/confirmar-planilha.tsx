@@ -174,21 +174,7 @@ function converterData(data: string): string {
 
 
 
-/**
 
- * Converte valores da planilha sem alterar o sinal original.
-
- *
-
- * -100,00   => -100
-
- * 100,00    => 100
-
- * -1.250,50 => -1250.50
-
- * 1.250,50  => 1250.50
-
- */
 
 function converterValor(valor: unknown): number | null {
 
@@ -826,7 +812,7 @@ function PreviewPlanilha() {
 
 
 
-            // Preserva o sinal original da planilha.
+           
 
             valor,
 
