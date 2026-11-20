@@ -389,8 +389,7 @@ function Ilustracao({ tipo }: { tipo: TipoIlustracao }) {
     compras: '🛍️',
   }
 
-  // Ajustes ópticos pequenos: os desenhos dos emojis têm alturas visuais diferentes
-  // mesmo quando ocupam uma caixa com as mesmas dimensões.
+  
   const ajusteVertical: Record<TipoIlustracao, string> = {
     cartao: 'translateY(0px)',
     juros: 'translateY(1px)',
@@ -405,10 +404,10 @@ function Ilustracao({ tipo }: { tipo: TipoIlustracao }) {
 
   return (
     <div className="relative flex h-[132px] w-full items-center justify-center overflow-hidden">
-      {/* Fundo padronizado para todos os conteúdos */}
+      
       <div className="absolute h-[108px] w-[170px] rounded-full bg-[#f0eaff]" />
 
-      {/* Mesmo tamanho, formato e sombra em todos os ícones */}
+      
       <div className="relative flex h-[84px] w-[88px] items-center justify-center rounded-[24px] bg-white shadow-[0_10px_28px_rgba(128,88,239,0.14)]">
         <span
           role="img"
@@ -428,7 +427,7 @@ function Ilustracao({ tipo }: { tipo: TipoIlustracao }) {
         </span>
       </div>
 
-      {/* Selo decorativo igual em todos os cards */}
+      
       <div className="absolute right-[22%] top-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#ffbd57] text-white shadow-sm">
         <Sparkles size={15} strokeWidth={2.2} />
       </div>
